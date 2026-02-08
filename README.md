@@ -1,5 +1,6 @@
 # limiting-factor-iot-forecast
 Limits of Short-Term Indoor Temperature Forecasting with Minimal IoT Sensing
+
 📌 Project Overview
 
 This study investigates the practical boundaries of time-series forecasting in "data-starved" environments. Using only a single DHT22 sensor and a 7-day window, we evaluate at what point predictive modeling ceases to provide value over a simple persistence (naive) approach.
