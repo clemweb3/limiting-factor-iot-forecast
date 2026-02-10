@@ -10,7 +10,7 @@ Most IoT projects focus on maximizing accuracy; this project focuses on identify
 
 - **Sensor:** Single DHT22 (Temp and Humidity)
 - **Sampling Interval:** 5 Minutes
-- **Data Volume:** ~2,016 observations (7 days)
+- **Data Volume:** ~2,017 observation spanning from Jan 23-30, 2026 that starts and ends at 11:11PM 
 - **Core Challenge:** Predicting temperature with no external data (weather APIs, occupancy, or HVAC state).
 
 🛠️ Logic & Workflow
