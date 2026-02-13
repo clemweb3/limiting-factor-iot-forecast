@@ -24,7 +24,7 @@ var/
 # --- VS Code ---
 .vscode/
 !.vscode/settings.json
-!.vscode/tasks.json
+!.vscode/tasks.jsongit
 !.vscode/launch.json
 !.vscode/extensions.json
 .history/
