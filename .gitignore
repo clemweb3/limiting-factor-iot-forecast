@@ -21,14 +21,6 @@ sdist/
 var/
 *.egg-info/
 
-# --- Data & Large Files ---
-# We generally ignore raw data to keep the repo light. 
-# Small CSVs (<5MB) can be tracked, but it's best practice to ignore them.
-data/raw/*.csv
-data/processed/*.csv
-*.log
-*.sqlite
-
 # --- VS Code ---
 .vscode/
 !.vscode/settings.json
@@ -41,8 +33,3 @@ data/processed/*.csv
 .DS_Store
 Thumbs.db
 
-# --- Project Specific ---
-# Ignore saved model weights (if we move to ML)
-models/*.pkl
-models/*.joblib
-models/*.h5
