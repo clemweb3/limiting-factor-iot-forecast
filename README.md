@@ -54,20 +54,3 @@ By shifting from reactive "Full-Power" cooling to proactive "Low-Intensity" pre-
 ### 🏙️ SDG 11: Sustainable Cities and Communities
 Enables smart-home retrofitting for older residential structures without requiring invasive multi-sensor installations or months of data collection.
 
----
-
-## 🛠️ Repository Structure
-```text
-├── app/
-│   └── test_load.py           # Python Inference Engine (tests)
-├── data/
-│   ├── processed/             # Cleaned 5-min interval data
-│   └── raw/                   # Original telemetry logs
-├── firmware/
-│   └── proactive_node.ino      # ESP32 C++ source code
-├── models/
-│   └── sarima_thermal_model.pkl # Exported SARIMA weights
-├── notebooks/
-│   ├── 01_eda_stationarity.ipynb
-│   └── 02_modeling_evaluation.ipynb
-└── requirements.txt           # Python dependency manifest
