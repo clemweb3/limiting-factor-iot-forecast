@@ -1,3 +1,4 @@
+# Data Science & Modeling
 pandas
 numpy
 matplotlib
@@ -5,5 +6,9 @@ seaborn
 statsmodels
 scikit-learn
 scipy
-ipykernel
 joblib
+ipykernel
+
+# Cloud & API Framework
+fastapi
+uvicorn
