@@ -12,3 +12,4 @@ ipykernel
 # Cloud & API Framework
 fastapi
 uvicorn
+python-dotenv

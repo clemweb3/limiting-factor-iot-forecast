@@ -24,7 +24,7 @@ var/
 # --- VS Code ---
 .vscode/
 !.vscode/settings.json
-!.vscode/tasks.jsongit
+!.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 .history/
@@ -33,3 +33,7 @@ var/
 .DS_Store
 Thumbs.db
 
+.env
+app/iot_data.db
+__pycache__/
+*.pkl
