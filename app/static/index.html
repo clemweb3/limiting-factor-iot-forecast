@@ -1,41 +1,91 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Proactive Climate AI Demo</title>
+    <title>Proactive Climate AI Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; padding: 40px; }
-        .dashboard-card { background: #2d2d2d; padding: 30px; border-radius: 20px; border-left: 8px solid #4caf50; max-width: 600px; margin: auto; }
-        .temp-display { font-size: 48px; font-weight: bold; color: #4caf50; }
-        .cta-box { background: #3d3d3d; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px dashed #888; }
-        .status-pill { padding: 5px 15px; border-radius: 20px; font-size: 12px; text-transform: uppercase; background: #444; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; padding: 40px; display: flex; justify-content: center; }
+        .dashboard-card { 
+            background: #1e1e1e; padding: 40px; border-radius: 24px; 
+            border-left: 10px solid #4caf50; width: 100%; max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: all 0.5s ease;
+        }
+        .status-pill { 
+            background: #333; padding: 6px 14px; border-radius: 50px; 
+            font-size: 11px; font-weight: bold; letter-spacing: 1px; color: #4caf50;
+        }
+        #sentiment-header { margin-top: 20px; font-size: 28px; color: #fff; }
+        .temp-display { font-size: 64px; font-weight: 800; margin: 10px 0; color: #4caf50; }
+        .cta-box { 
+            background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 20px; border-radius: 16px; margin-top: 25px;
+        }
+        .cta-box strong { color: #4caf50; display: block; margin-bottom: 5px; text-transform: uppercase; font-size: 12px; }
+        #cta-text { margin: 0; line-height: 1.5; font-style: italic; color: #ccc; }
+        .forecast-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; font-size: 13px; color: #888; }
+        .pulse { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
-    <div class="dashboard-card">
-        <span class="status-pill" id="status-mode">Live Monitoring</span>
-        <h1 id="sentiment-header">Analyzing Climate...</h1>
+    <div class="dashboard-card" id="main-card">
+        <span class="status-pill" id="status-label">● LIVE SYSTEM</span>
+        <h1 id="sentiment-header">Initializing...</h1>
         <div class="temp-display" id="curr-temp">--°C</div>
+        
         <div class="cta-box">
-            <strong>AI Strategy:</strong>
-            <p id="cta-text">Waiting for telemetry data...</p>
+            <strong>Proactive Action Plan</strong>
+            <p id="cta-text">Waiting for AI to analyze telemetry...</p>
         </div>
-        <p style="font-size: 12px; color: #888; margin-top: 20px;">Predictions: 30m: <span id="p30">--</span> | 60m: <span id="p60">--</span></p>
+
+        <div class="forecast-grid">
+            <div>30m Forecast: <strong id="p30" style="color: #bbb;">--</strong></div>
+            <div>60m Forecast: <strong id="p60" style="color: #bbb;">--</strong></div>
+        </div>
     </div>
 
     <script>
-        async function update() {
-            const res = await fetch('/history');
-            const data = await res.json();
-            if (data.length > 0) {
-                const latest = data[0];
-                document.getElementById('sentiment-header').innerText = latest.decision.split(':')[1];
-                document.getElementById('curr-temp').innerText = `${latest.temperature}°C`;
-                document.getElementById('cta-text').innerText = latest.human_notes;
-                document.getElementById('p30').innerText = `${latest.prediction_30}°C`;
-                document.getElementById('p60').innerText = `${latest.prediction_60}°C`;
+        async function updateDashboard() {
+            try {
+                // We fetch the history from our FastAPI server
+                const res = await fetch('/history');
+                const data = await res.json();
+                
+                if (data && data.length > 0) {
+                    const latest = data[0];
+                    
+                    // 1. Update Temperature
+                    document.getElementById('curr-temp').innerText = `${latest.temperature.toFixed(1)}°C`;
+                    
+                    // 2. Update Header (Status part after the colon, e.g., "STABLE")
+                    const statusParts = latest.decision.split(':');
+                    document.getElementById('sentiment-header').innerText = statusParts[1] || statusParts[0];
+                    
+                    // 3. Update CTA Text (Matches the column in your database)
+                    document.getElementById('cta-text').innerText = latest.human_notes || "No action required.";
+                    
+                    // 4. Update Forecasts
+                    document.getElementById('p30').innerText = `${latest.prediction_30.toFixed(2)}°C`;
+                    document.getElementById('p60').innerText = `${latest.prediction_60.toFixed(2)}°C`;
+
+                    // 5. Visual Cue: Change border color if it's hot
+                    const card = document.getElementById('main-card');
+                    if (latest.temperature >= 30) {
+                        card.style.borderLeftColor = "#ff5252";
+                        document.getElementById('status-label').style.color = "#ff5252";
+                    } else {
+                        card.style.borderLeftColor = "#4caf50";
+                        document.getElementById('status-label').style.color = "#4caf50";
+                    }
+                }
+            } catch (err) {
+                console.error("Fetch error:", err);
             }
         }
-        setInterval(update, 3000);
+
+        // Run immediately, then every 3 seconds
+        updateDashboard();
+        setInterval(updateDashboard, 3000);
     </script>
 </body>
 </html>
