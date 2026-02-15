@@ -1,31 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Proactive Climate Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Proactive Climate AI Demo</title>
     <style>
-        body { font-family: sans-serif; margin: 40px; background: #f4f4f4; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .status { font-weight: bold; padding: 5px 10px; border-radius: 4px; }
-        .RED_ON { background: #ffcccc; color: #cc0000; }
-        .GREEN_ON { background: #ccffcc; color: #006600; }
-        .YELLOW_BLINK { background: #ffffcc; color: #888800; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; padding: 40px; }
+        .dashboard-card { background: #2d2d2d; padding: 30px; border-radius: 20px; border-left: 8px solid #4caf50; max-width: 600px; margin: auto; }
+        .temp-display { font-size: 48px; font-weight: bold; color: #4caf50; }
+        .cta-box { background: #3d3d3d; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px dashed #888; }
+        .status-pill { padding: 5px 15px; border-radius: 20px; font-size: 12px; text-transform: uppercase; background: #444; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1> Edge-Driven Climate Monitor</h1>
-        <p>Real-time SARIMA Forecasting Status</p>
-        <div id="latest-data">Loading telemetry...</div>
-        <canvas id="tempChart" width="400" height="200"></canvas>
+    <div class="dashboard-card">
+        <span class="status-pill" id="status-mode">Live Monitoring</span>
+        <h1 id="sentiment-header">Analyzing Climate...</h1>
+        <div class="temp-display" id="curr-temp">--°C</div>
+        <div class="cta-box">
+            <strong>AI Strategy:</strong>
+            <p id="cta-text">Waiting for telemetry data...</p>
+        </div>
+        <p style="font-size: 12px; color: #888; margin-top: 20px;">Predictions: 30m: <span id="p30">--</span> | 60m: <span id="p60">--</span></p>
     </div>
 
     <script>
-        async function updateDashboard() {
-            // future: fetch data from API and update the dashboard
-            console.log("Fetching telemetry from local API...");
+        async function update() {
+            const res = await fetch('/history');
+            const data = await res.json();
+            if (data.length > 0) {
+                const latest = data[0];
+                document.getElementById('sentiment-header').innerText = latest.decision.split(':')[1];
+                document.getElementById('curr-temp').innerText = `${latest.temperature}°C`;
+                document.getElementById('cta-text').innerText = latest.human_notes;
+                document.getElementById('p30').innerText = `${latest.prediction_30}°C`;
+                document.getElementById('p60').innerText = `${latest.prediction_60}°C`;
+            }
         }
-        setInterval(updateDashboard, 5000);
+        setInterval(update, 3000);
     </script>
 </body>
 </html>
