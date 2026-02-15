@@ -3,20 +3,18 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-# Absolute imports based on your structure
+# Absolute imports
 from .database import get_db_connection, init_db
 from .model_helper import ModelEngine
 
-# 1. LOAD CONFIGURATION
-# This pulls the PROACTIVE_API_KEY from your .env file
+# 1. INITIALIZE CONFIG & SECURITY
 load_dotenv()
 API_KEY = os.getenv("PROACTIVE_API_KEY")
 
-app = FastAPI(title="Edge-Driven Proactive API")
+app = FastAPI(title="Human-Centric Proactive AI")
 
-# 2. SECURITY: CORS (Cross-Origin Resource Sharing)
-# This allows your index.html to talk to your API safely
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,64 +22,71 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize the ML Inference Engine
+# 2. MOUNT DASHBOARD STATIC FILES
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# 3. ENGINE SETUP
 try:
     engine = ModelEngine()
 except Exception as e:
-    print(f"[CRITICAL] AI Engine failed to start: {e}")
+    print(f"[CRITICAL] AI Engine Failure: {e}")
     engine = None
 
-# 3. LIFECYCLE MANAGEMENT
 @app.on_event("startup")
 def startup_event():
-    """Triggers when the server starts - ensures DB exists."""
     init_db()
-    print("Proactive Climate Server is LIVE")
+    print("🚀 Proactive Climate Engine: ONLINE")
 
-# 4. SECURE TELEMETRY ENDPOINT
+# 4. DATA PROVIDER (FOR THE HUMAN UI)
+@app.get("/history")
+async def get_history():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Fetching latest 10 to show trends on the dashboard
+    cursor.execute('SELECT * FROM readings ORDER BY timestamp DESC LIMIT 10')
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+# 5. SECURE TELEMETRY & CTA ENGINE
 @app.post("/telemetry")
 async def process_telemetry(temp: float, hum: float, x_api_key: str = Header(None)):
-    """
-    Main ingestion point for ESP32.
-    Validates API Key before processing ML logic.
-    """
-    # Credential Validation
+    # Privacy Check
     if x_api_key != API_KEY:
-        raise HTTPException(status_code=401, detail="Unauthorized: Invalid API Key")
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
-    # ML Inference Step
-    # We predict the next 60 minutes based on current sensor input
     if engine:
-        predicted_temp = engine.predict_horizon(steps=12)
-        led_state, reason = engine.get_decision(temp, predicted_temp)
+        # A. Get Predictions (30m & 60m)
+        p30, p60 = engine.predict_horizons()
+        
+        # B. Generate Context-Aware Sentiment & Time-Bound CTA
+        # The engine now returns: (LED_CMD, STATUS_MSG, HUMAN_MESSAGE_WITH_ETA)
+        led_cmd, state, human_msg = engine.get_contextual_status(temp, p30, p60)
     else:
-        # Fallback to reactive logic if model fails
-        predicted_temp = 0.0
-        led_state, reason = ("GREEN_ON" if temp >= 30.0 else "RED_ON"), "MODEL_OFFLINE"
+        p30, p60 = 0.0, 0.0
+        led_cmd, state, human_msg = "RED_ON", "OFFLINE", "System offline. Operating in failsafe mode."
 
-    # Persistence Step
-    # Logging the interaction into the SQL database
+    # C. Persistence (Save the "Promise" to the Database)
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO readings (temperature, humidity, prediction, decision)
-            VALUES (?, ?, ?, ?)
-        ''', (temp, hum, predicted_temp, f"{led_state}:{reason}"))
+            INSERT INTO readings (
+                temperature, humidity, prediction_30, prediction_60, decision, human_notes
+            ) VALUES (?, ?, ?, ?, ?, ?)
+        ''', (temp, hum, p30, p60, f"{led_cmd}:{state}", human_msg))
         conn.commit()
         conn.close()
     except Exception as db_error:
         print(f"[DB ERROR] {db_error}")
 
+    # D. Return the "Human" Instructions to the ESP32
     return {
-        "command": led_state,
-        "prediction": round(predicted_temp, 2),
-        "reason": reason,
-        "timestamp": "recorded"
+        "command": led_cmd,
+        "status": state,
+        "cta": human_msg,
+        "forecast": {"30m": round(p30, 2), "60m": round(p60, 2)}
     }
 
-# 5. SERVER RUNTIME
 if __name__ == "__main__":
-    # Runs the server on port 8000
-    # Use 0.0.0.0 to make it accessible to ESP32 on the same Wi-Fi
     uvicorn.run(app, host="0.0.0.0", port=8000)
