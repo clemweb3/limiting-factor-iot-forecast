@@ -35,7 +35,7 @@ except Exception as e:
 @app.on_event("startup")
 def startup_event():
     init_db()
-    print("🚀 Proactive Climate Engine: ONLINE")
+    print("Proactive Climate Engine: ONLINE")
 
 # 4. DATA PROVIDER (FOR THE HUMAN UI)
 @app.get("/history")
