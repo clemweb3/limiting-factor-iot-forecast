@@ -1,15 +1,112 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Proactive AI Dashboard</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #4caf50; /* Dynamic Accent */
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        
+        .glass-card {
+            background: var(--card);
+            width: 400px;
+            padding: 30px;
+            border-radius: 28px;
+            border-top: 8px solid var(--accent);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transition: all 0.5s ease;
+            position: relative;
+        }
+
+        /* Innovation: Background Glow that matches the accent */
+        .glass-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 28px; box-shadow: 0 0 20px var(--accent); opacity: 0.2; pointer-events: none;
+        }
+
+        .temp-val { font-size: 64px; font-weight: 800; color: var(--accent); margin: 10px 0; }
+        .status-badge { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; font-size: 12px; color: var(--accent); }
+        .cta-area { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; border-left: 3px solid var(--accent); margin-top: 20px; }
+        
+        /* The requested Yellow Blink */
+        .blink-yellow { animation: blinker 1s linear infinite; }
+        @keyframes blinker {
+            50% { border-top-color: #fbbf24; box-shadow: 0 0 30px #fbbf24; }
+        }
+    </style>
 </head>
 <body>
+
     <div class="glass-card" id="main-card">
-        <h1 id="status-title">AI Analyzing...</h1>
-        <div id="curr-temp">--°C</div>
-        <p id="cta-text">Waiting for telemetry...</p>
+        <span class="status-badge" id="pill">SYSTEM SYNCING...</span>
+        <h2 id="state-title">Analyzing...</h2>
+        <div class="temp-val" id="disp-temp">--°C</div>
+        
+        <div class="cta-area">
+            <small style="color: #888; text-transform: uppercase;"> Strategy</small>
+            <p id="disp-cta" style="margin: 5px 0; font-style: italic;">Connecting to sensor hub...</p>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 13px; color: #94a3b8;">
+            <span>30m: <b id="d30">--</b></span>
+            <span>60m: <b id="d60">--</b></span>
+        </div>
     </div>
 
-    <script src="dashboard.js"></script>
+    <script>
+        let previousDecision = "";
+
+        async function refresh() {
+            try {
+                const r = await fetch('/history');
+                const d = await r.json();
+                if(!d || d.length === 0) return;
+
+                const now = d[0];
+                const card = document.getElementById('main-card');
+
+                // 1. Logic for Transition (Yellow Blink)
+                if (previousDecision !== "" && previousDecision !== now.decision) {
+                    card.classList.add('blink-yellow');
+                    document.getElementById('state-title').innerText = "CALIBRATING...";
+                    
+                    // Stay yellow for 3 seconds as requested
+                    setTimeout(() => {
+                        card.classList.remove('blink-yellow');
+                        updateDOM(now);
+                    }, 3000);
+                } else {
+                    updateDOM(now);
+                }
+                previousDecision = now.decision;
+            } catch(e) { console.log("Waiting for server..."); }
+        }
+
+        function updateDOM(data) {
+            const [cmd, state] = data.decision.split(':');
+            
+            // Text Updates
+            document.getElementById('disp-temp').innerText = data.temperature.toFixed(1) + "°C";
+            document.getElementById('state-title').innerText = state.replace('_', ' ');
+            document.getElementById('disp-cta').innerText = data.human_notes;
+            document.getElementById('d30').innerText = data.prediction_30.toFixed(2) + "°C";
+            document.getElementById('d60').innerText = data.prediction_60.toFixed(2) + "°C";
+            document.getElementById('pill').innerText = "● " + state;
+
+            // Innovation: Global Theme Switching
+            let color = "#4caf50"; // Default Green
+            if (state.includes("COOLING") || data.temperature >= 30) color = "#f44336"; // Red
+            if (state.includes("EMERGENCY") || cmd === "YELLOW_BLINK") color = "#fbbf24"; // Yellow
+            
+            document.documentElement.style.setProperty('--accent', color);
+        }
+
+        setInterval(refresh, 3000);
+        refresh();
+    </script>
 </body>
 </html>
