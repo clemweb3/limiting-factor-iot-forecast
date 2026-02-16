@@ -1,0 +1,35 @@
+:root {
+    --bg-color: #0f111a;
+    --accent-color: #4caf50; 
+    --glass-bg: rgba(255, 255, 255, 0.05);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-radius: 32px;
+    padding: 40px;
+    border-top: 4px solid var(--accent-color);
+    transition: all 0.5s ease;
+}
+
+/* The Yellow Blink Transition */
+.transitioning {
+    animation: yellow-glow 1.5s infinite;
+}
+
+@keyframes yellow-glow {
+    0% { border-top-color: var(--accent-color); }
+    50% { border-top-color: #fbbf24; box-shadow: 0 0 20px #fbbf24; }
+    100% { border-top-color: var(--accent-color); }
+}

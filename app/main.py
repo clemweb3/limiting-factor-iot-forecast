@@ -1,5 +1,6 @@
 import os
 import uvicorn
+import asyncio # For future transition delays
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +12,7 @@ from .model_helper import ModelEngine
 
 # 1. INITIALIZE CONFIG & SECURITY
 load_dotenv()
+# Make sure your .env has PROACTIVE_API_KEY or use the default below
 API_KEY = os.getenv("PROACTIVE_API_KEY")
 
 app = FastAPI(title="Human-Centric Proactive AI")
@@ -42,7 +44,6 @@ def startup_event():
 async def get_history():
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Fetching latest 10 to show trends on the dashboard
     cursor.execute('SELECT * FROM readings ORDER BY timestamp DESC LIMIT 10')
     rows = cursor.fetchall()
     conn.close()
@@ -56,17 +57,16 @@ async def process_telemetry(temp: float, hum: float, x_api_key: str = Header(Non
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     if engine:
-        # A. Get Predictions (30m & 60m)
-        p30, p60 = engine.predict_horizons()
+        # IMPROVEMENT: Passing 'temp' to allow anomaly detection/spike checks
+        p30, p60 = engine.predict_horizons(temp) 
         
-        # B. Generate Context-Aware Sentiment & Time-Bound CTA
-        # The engine now returns: (LED_CMD, STATUS_MSG, HUMAN_MESSAGE_WITH_ETA)
+        # IMPROVEMENT: Contextual status now handles anomaly states and varied scripts
         led_cmd, state, human_msg = engine.get_contextual_status(temp, p30, p60)
     else:
         p30, p60 = 0.0, 0.0
         led_cmd, state, human_msg = "RED_ON", "OFFLINE", "System offline. Operating in failsafe mode."
 
-    # C. Persistence (Save the "Promise" to the Database)
+    # 6. PERSISTENCE
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -80,7 +80,7 @@ async def process_telemetry(temp: float, hum: float, x_api_key: str = Header(Non
     except Exception as db_error:
         print(f"[DB ERROR] {db_error}")
 
-    # D. Return the "Human" Instructions to the ESP32
+    # 7. RETURN TO CLIENT (ESP32 or Frontend)
     return {
         "command": led_cmd,
         "status": state,
