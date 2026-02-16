@@ -3,13 +3,12 @@ import os
 import pandas as pd
 import random
 
-# Absolute path for the model
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '../models/sarima_thermal_model.pkl')
 
 class ModelEngine:
     def __init__(self):
         self.THRESHOLD = 30.0
-        # IMPROVEMENT: Anomaly detection threshold (degrees change per request)
+        # Anomaly detection threshold (degrees change per request)
         self.SPIKE_THRESHOLD = 2.0 
         self.last_temp = None
         
@@ -22,7 +21,7 @@ class ModelEngine:
 
     def predict_horizons(self, current_temp):
         """Calculates forecasts with an anomaly override logic."""
-        # IMPROVEMENT: Detect Sudden Spikes (e.g., Fire/Sensor malfunction)
+        #  Detect Sudden Spikes (e.g., Fire/Sensor malfunction)
         if self.last_temp is not None:
             diff = current_temp - self.last_temp
             if diff > self.SPIKE_THRESHOLD:
