@@ -63,7 +63,6 @@
             transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* Frosted Glass Top Shine */
         .glass-card::before {
             content: '';
             position: absolute;
@@ -116,55 +115,38 @@
         .forecast-item span { font-size: 12px; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700; }
         .forecast-item b { display: block; font-size: 20px; color: var(--accent); margin-top: 5px; transition: color 0.5s; }
 
-        /* RECALIBRATION STATE: The Yellow Pulse */
         .blink-yellow { 
             animation: pulse-yellow 0.8s infinite alternate ease-in-out; 
         }
 
         @keyframes pulse-yellow {
-            0% { 
-                border-top-color: #fbbf24; 
-                box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
-                transform: scale(1);
-            }
-            100% { 
-                border-top-color: #f59e0b; 
-                box-shadow: 0 0 60px rgba(251, 191, 36, 0.6);
-                transform: scale(1.02);
-            }
+            0% { border-top-color: #fbbf24; box-shadow: 0 0 15px rgba(251, 191, 36, 0.2); transform: scale(1); }
+            100% { border-top-color: #f59e0b; box-shadow: 0 0 60px rgba(251, 191, 36, 0.6); transform: scale(1.02); }
         }
     </style>
 </head>
 <body>
+
+    <audio id="snd-ping" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+    <audio id="snd-process" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" loop></audio>
+    <audio id="snd-alert" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
 
     <div class="bg-blob blob-1" id="blob1"></div>
     <div class="bg-blob blob-2" id="blob2"></div>
 
     <div class="glass-card" id="main-card">
         <span class="status-badge" id="pill">Initial Syncing...</span>
-        
-        <h2 id="state-title" style="margin-top:25px; font-weight: 600; letter-spacing: -1px; color: rgba(255,255,255,0.9);">
-            Climate Monitoring
-        </h2>
-
+        <h2 id="state-title" style="margin-top:25px; font-weight: 600; letter-spacing: -1px; color: rgba(255,255,255,0.9);">Climate Monitoring</h2>
         <div class="temp-val" id="disp-temp">--°C</div>
         
         <div class="cta-area" id="cta-box">
             <small id="strategy-label" style="color: var(--accent); text-transform: uppercase; font-weight: 900; font-size: 11px;">AI PROJECTION</small>
-            <p id="disp-cta" style="margin: 10px 0 0 0; font-style: italic; line-height: 1.6; font-size: 15px; color: rgba(255,255,255,0.85);">
-                Stabilizing connection to local ESP32 telemetry node...
-            </p>
+            <p id="disp-cta" style="margin: 10px 0 0 0; font-style: italic; line-height: 1.6; font-size: 15px; color: rgba(255,255,255,0.85);">Stabilizing telemetry node...</p>
         </div>
 
         <div class="forecast-grid">
-            <div class="forecast-item">
-                <span>30m Outlook</span>
-                <b id="d30">--</b>
-            </div>
-            <div class="forecast-item">
-                <span>60m Outlook</span>
-                <b id="d60">--</b>
-            </div>
+            <div class="forecast-item"><span>30m Outlook</span><b id="d30">--</b></div>
+            <div class="forecast-item"><span>60m Outlook</span><b id="d60">--</b></div>
         </div>
     </div>
 
@@ -180,41 +162,41 @@
 
         async function refresh() {
             if (isCalibrating) return;
-
             try {
                 const r = await fetch('/history');
                 const d = await r.json();
                 if(!d || d.length === 0) return;
-
                 const now = d[0];
-                const card = document.getElementById('main-card');
-
-                // Logic: Detection of State Change (Predictive Buffer)
                 if (previousDecision !== "" && previousDecision !== now.decision) {
                     startRecalibration(now);
                 } else {
                     updateDOM(now);
                 }
                 previousDecision = now.decision;
-            } catch(e) { 
-                document.getElementById('pill').innerText = "OFFLINE";
-                console.log("Server unreachable."); 
-            }
+            } catch(e) { document.getElementById('pill').innerText = "OFFLINE"; }
         }
 
         function startRecalibration(targetData) {
             isCalibrating = true;
-            const card = document.getElementById('main-card');
             
+            // Start Processing Hum
+            const processSnd = document.getElementById('snd-process');
+            processSnd.volume = 0.4;
+            processSnd.play().catch(e => console.log("Click page to enable audio"));
+
+            const card = document.getElementById('main-card');
             card.classList.add('blink-yellow');
-            setTheme("#fbbf24", "#92400e"); // Forced Yellow Theme
+            setTheme("#fbbf24", "#92400e");
 
             document.getElementById('state-title').innerText = "RECALIBRATING...";
             document.getElementById('pill').innerText = "● ANALYZING SHIFT";
-            document.getElementById('disp-cta').innerText = "The AI has detected a thermal trend change. Calculating new proactive strategy...";
+            document.getElementById('disp-cta').innerText = "AI is recalculating proactive strategy based on shift...";
 
-            // The 3-second "Warning" delay
             setTimeout(() => {
+                // Stop Processing Hum
+                processSnd.pause();
+                processSnd.currentTime = 0;
+                
                 card.classList.remove('blink-yellow');
                 isCalibrating = false;
                 updateDOM(targetData);
@@ -224,7 +206,10 @@
         function updateDOM(data) {
             const [cmd, state] = data.decision.split(':');
             
-            // Textual Content
+            // Sound feedback for data update
+            document.getElementById('snd-ping').volume = 0.3;
+            document.getElementById('snd-ping').play().catch(e => {});
+
             document.getElementById('disp-temp').innerText = data.temperature.toFixed(1) + "°C";
             document.getElementById('state-title').innerText = state.replace(/_/g, ' ');
             document.getElementById('disp-cta').innerText = data.human_notes;
@@ -232,24 +217,23 @@
             document.getElementById('d60').innerText = data.prediction_60.toFixed(1) + "°C";
             document.getElementById('pill').innerText = "● " + state;
 
-            // Contextual Theme Assignment
-            let primary = "#10b981"; // Stable Green
-            let secondary = "#1e40af"; // Calm Blue
+            let primary = "#10b981"; 
+            let secondary = "#1e40af"; 
 
             if (state.includes("COOLING") || data.temperature >= 30) {
-                primary = "#ef4444"; // Heat Alert Red
+                primary = "#ef4444"; 
                 secondary = "#7f1d1d"; 
+                document.getElementById('snd-alert').play().catch(e => {});
             }
             
             if (state.includes("EMERGENCY") || cmd === "YELLOW_BLINK") {
-                primary = "#fbbf24"; // Warning Amber
+                primary = "#fbbf24"; 
                 secondary = "#92400e"; 
             } 
             
             setTheme(primary, secondary);
         }
 
-        // Run intervals
         setInterval(refresh, 3000);
         refresh();
     </script>
