@@ -5,13 +5,13 @@
     <title>Proactive AI Dashboard</title>
     <style>
         :root {
-            --bg: #0f172a;
-            --card-glass: rgba(255, 255, 255, 0.12);
+            --bg: #020617; /* Deeper dark for better contrast */
+            --card-glass: rgba(255, 255, 255, 0.08);
             --accent: #4caf50; 
         }
 
         body { 
-            font-family: 'Segoe UI', sans-serif; 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
             background: var(--bg); 
             color: white; 
             display: flex; 
@@ -23,85 +23,90 @@
             position: relative;
         }
 
-        /* Background Blobs to make glassmorphism visible */
+        /* Animated Thermal Blobs */
         .bg-blob {
             position: absolute;
-            width: 400px;
-            height: 400px;
-            background: linear-gradient(135deg, var(--accent), #3b82f6);
-            filter: blur(80px);
+            width: 500px;
+            height: 500px;
+            filter: blur(100px);
             border-radius: 50%;
             z-index: -1;
-            opacity: 0.4;
-            transition: all 1s ease;
+            opacity: 0.35;
+            transition: background 2s ease, transform 5s ease-in-out;
+            animation: drift 20s infinite alternate;
         }
-        .blob-1 { top: 10%; left: 20%; }
-        .blob-2 { bottom: 10%; right: 20%; background: #9333ea; }
+
+        .blob-1 { top: -10%; left: -10%; background: var(--accent); }
+        .blob-2 { bottom: -10%; right: -10%; background: #1e40af; } /* Deep Blue default */
+
+        @keyframes drift {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(100px, 50px) scale(1.1); }
+        }
 
         .glass-card {
-            width: 400px;
-            padding: 35px;
+            width: 420px;
+            padding: 40px;
             background: var(--card-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 28px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-top: 8px solid var(--accent);
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4),
-                inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             position: relative;
-            overflow: hidden;
-            transition: all 0.5s ease;
+            transition: border-color 0.5s ease;
         }
 
-        /* Top highlight shine */
-        .glass-card::before {
+        /* Glass Shine Effect */
+        .glass-card::after {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 32px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%);
             pointer-events: none;
         }
 
-        .temp-val { font-size: 68px; font-weight: 800; color: white; margin: 10px 0; text-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .temp-val { font-size: 72px; font-weight: 800; color: white; margin: 15px 0; letter-spacing: -2px; }
         
         .status-badge { 
-            background: rgba(255,255,255,0.15); 
-            padding: 6px 14px; 
-            border-radius: 20px; 
-            font-size: 11px; 
-            font-weight: bold;
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1); 
+            padding: 6px 16px; 
+            border-radius: 30px; 
+            font-size: 10px; 
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         .cta-area { 
-            background: rgba(0,0,0,0.2); 
-            backdrop-filter: blur(5px);
-            padding: 18px; 
-            border-radius: 18px; 
+            background: rgba(0,0,0,0.3); 
+            padding: 20px; 
+            border-radius: 20px; 
             border-left: 4px solid var(--accent); 
-            margin-top: 25px; 
+            margin-top: 30px; 
+            position: relative;
+            z-index: 1;
         }
 
         .forecast-container {
             display: flex; 
             justify-content: space-between; 
-            margin-top: 25px; 
+            margin-top: 30px; 
             font-size: 13px; 
-            color: rgba(255,255,255,0.7);
+            color: rgba(255,255,255,0.5);
         }
 
-        .forecast-container b { color: white; font-size: 15px; }
+        .forecast-container b { color: var(--accent); font-size: 16px; transition: color 0.5s; }
 
-        /* The requested Yellow Blink */
-        .blink-yellow { animation: blinker 1s linear infinite; }
-        @keyframes blinker {
-            50% { border-top-color: #fbbf24; box-shadow: 0 0 40px rgba(251, 191, 36, 0.5); }
+        /* Yellow Calibration State */
+        .blink-yellow { animation: pulse-yellow 1s infinite; }
+        @keyframes pulse-yellow {
+            0% { border-top-color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); }
+            50% { border-top-color: #f59e0b; box-shadow: 0 0 50px rgba(251, 191, 36, 0.5); }
+            100% { border-top-color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); }
         }
     </style>
 </head>
@@ -111,18 +116,18 @@
     <div class="bg-blob blob-2" id="blob2"></div>
 
     <div class="glass-card" id="main-card">
-        <span class="status-badge" id="pill">SYSTEM SYNCING...</span>
-        <h2 id="state-title" style="margin-top:20px; font-weight: 500;">Analyzing...</h2>
+        <span class="status-badge" id="pill">Initializing AI...</span>
+        <h2 id="state-title" style="margin-top:25px; font-weight: 600; letter-spacing: -0.5px;">Monitoring Environment</h2>
         <div class="temp-val" id="disp-temp">--°C</div>
         
         <div class="cta-area">
-            <small style="color: rgba(255,255,255,0.5); text-transform: uppercase; font-weight: bold;">AI Strategy</small>
-            <p id="disp-cta" style="margin: 8px 0 0 0; font-style: italic; line-height: 1.4;">Connecting to sensor hub...</p>
+            <small style="color: var(--accent); text-transform: uppercase; font-weight: 800; font-size: 10px;">System Intelligence</small>
+            <p id="disp-cta" style="margin: 10px 0 0 0; font-style: italic; line-height: 1.5; font-size: 15px;">Awaiting telemetry from ESP32 node...</p>
         </div>
 
         <div class="forecast-container">
-            <span>30m Forecast: <b id="d30">--</b></span>
-            <span>60m Forecast: <b id="d60">--</b></span>
+            <div>30m <br><b id="d30">--</b></div>
+            <div>60m <br><b id="d60">--</b></div>
         </div>
     </div>
 
@@ -138,6 +143,7 @@
                 const now = d[0];
                 const card = document.getElementById('main-card');
 
+                // Transition Logic
                 if (previousDecision !== "" && previousDecision !== now.decision) {
                     card.classList.add('blink-yellow');
                     document.getElementById('state-title').innerText = "CALIBRATING...";
@@ -150,7 +156,7 @@
                     updateDOM(now);
                 }
                 previousDecision = now.decision;
-            } catch(e) { console.log("Waiting for server..."); }
+            } catch(e) { console.log("Connection lost..."); }
         }
 
         function updateDOM(data) {
@@ -159,18 +165,27 @@
             document.getElementById('disp-temp').innerText = data.temperature.toFixed(1) + "°C";
             document.getElementById('state-title').innerText = state.replace('_', ' ');
             document.getElementById('disp-cta').innerText = data.human_notes;
-            document.getElementById('d30').innerText = data.prediction_30.toFixed(2) + "°C";
-            document.getElementById('d60').innerText = data.prediction_60.toFixed(2) + "°C";
+            document.getElementById('d30').innerText = data.prediction_30.toFixed(1) + "°";
+            document.getElementById('d60').innerText = data.prediction_60.toFixed(1) + "°";
             document.getElementById('pill').innerText = "● " + state;
 
-            // Global Theme Switching
-            let color = "#4caf50"; 
-            if (state.includes("COOLING") || data.temperature >= 30) color = "#f44336"; 
-            if (state.includes("EMERGENCY") || cmd === "YELLOW_BLINK") color = "#fbbf24"; 
+            // DYNAMIC THEMING
+            let color = "#10b981"; // Emerald Green (Stable)
+            let secondary = "#1e40af"; // Deep Blue
+
+            if (state.includes("COOLING") || data.temperature >= 30) {
+                color = "#ef4444"; // Red (Heat)
+                secondary = "#7f1d1d"; // Dark Crimson
+            }
+            if (state.includes("EMERGENCY") || cmd === "YELLOW_BLINK") {
+                color = "#fbbf24"; // Amber (Warning)
+                secondary = "#92400e"; // Brownish orange
+            } 
             
+            // Update UI Colors
             document.documentElement.style.setProperty('--accent', color);
-            // Move blobs to match color theme
             document.getElementById('blob1').style.background = color;
+            document.getElementById('blob2').style.background = secondary;
         }
 
         setInterval(refresh, 3000);
