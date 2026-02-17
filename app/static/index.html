@@ -8,12 +8,13 @@
             --bg: #020617;
             --card-glass: rgba(255, 255, 255, 0.07);
             --accent: #10b981; 
+            --glow: rgba(16, 185, 129, 0.2);
         }
 
         body { 
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
             background: var(--bg); color: white; display: flex; justify-content: center; 
-            align-items: center; height: 100vh; margin: 0; overflow: hidden;
+            align-items: center; height: 100vh; margin: 0; overflow: hidden; position: relative;
         }
 
         .bg-blob {
@@ -63,13 +64,13 @@
     <div class="bg-blob blob-2" id="blob2"></div>
 
     <div class="glass-card" id="main-card">
-        <span class="status-badge" id="pill">System Sync...</span>
+        <span class="status-badge" id="pill">Initial Syncing...</span>
         <h2 id="state-title" style="margin-top:25px; font-weight: 600;">Climate Monitoring</h2>
         <div class="temp-val" id="disp-temp">--°C</div>
         
         <div class="cta-area" id="cta-box">
             <small id="strategy-label" style="color: var(--accent); text-transform: uppercase; font-weight: 900; font-size: 11px;">AI PROJECTION</small>
-            <p id="disp-cta" style="margin: 10px 0 0 0; font-style: italic; line-height: 1.6; font-size: 15px;">Monitoring thermal telemetry...</p>
+            <p id="disp-cta" style="margin: 10px 0 0 0; font-style: italic; line-height: 1.6; font-size: 15px;">Awaiting telemetry...</p>
         </div>
 
         <div class="forecast-grid">
@@ -91,54 +92,66 @@
 
         async function refresh() {
             if (isCalibrating) return;
+
             try {
                 const r = await fetch('/history');
                 const d = await r.json();
                 if(!d || d.length === 0) return;
+
                 const now = d[0];
-
                 const currentT = now.temperature;
-                const stateShift = (previousDecision !== "" && previousDecision !== now.decision);
-                const diff = previousTemp !== null ? Math.abs(currentT - previousTemp) : 0;
+                
+                // Logic 1: Detecting Spike > 5 for Alarm
+                const spikeDetected = (previousTemp !== null && Math.abs(currentT - previousTemp) >= 5.0);
+                
+                // Logic 2: Standard State Change Recalibration
+                const stateChanged = (previousDecision !== "" && previousDecision !== now.decision);
 
-                // ANOMALY TRIGGER: If spike is > 5.0, play Alarm Sound immediately
-                if (diff >= 5.0) {
-                    document.getElementById('snd-alert').volume = 1.0;
+                if (spikeDetected) {
+                    // Immediate High-Priority Alarm for huge spikes
                     document.getElementById('snd-alert').play().catch(e=>{});
-                    startRecalibration(now, true); // true = anomaly mode
-                } 
-                // STANDARD TRIGGER: Spike > 2.0 (ModelHelper threshold) or state change
-                else if (stateShift || diff >= 2.0) {
-                    startRecalibration(now, false);
+                    startRecalibration(now, "ANOMALY DETECTED");
+                } else if (stateChanged) {
+                    // Standard Recalibration
+                    startRecalibration(now, "RECALIBRATING...");
                 } else {
-                    renderUI(now);
+                    updateDOM(now);
                 }
 
                 previousDecision = now.decision;
                 previousTemp = currentT;
-            } catch(e) { document.getElementById('pill').innerText = "OFFLINE"; }
+            } catch(e) { 
+                document.getElementById('pill').innerText = "OFFLINE";
+            }
         }
 
-        function startRecalibration(targetData, isAnomaly) {
+        function startRecalibration(targetData, label) {
             isCalibrating = true;
             const hum = document.getElementById('snd-process');
-            hum.volume = isAnomaly ? 0.6 : 0.3; // Louder hum if anomaly
+            hum.volume = 0.4;
             hum.play().catch(e => {});
 
-            document.getElementById('main-card').classList.add('blink-yellow');
+            const card = document.getElementById('main-card');
+            card.classList.add('blink-yellow');
             setTheme("#fbbf24", "#92400e");
-            document.getElementById('state-title').innerText = isAnomaly ? "ANOMALY DETECTED" : "RECALIBRATING...";
+
+            document.getElementById('state-title').innerText = label;
+            document.getElementById('pill').innerText = "● ANALYZING SHIFT";
+            document.getElementById('disp-cta').innerText = "The AI has detected a thermal trend change. Calculating new proactive strategy...";
 
             setTimeout(() => {
                 hum.pause();
                 hum.currentTime = 0;
-                document.getElementById('main-card').classList.remove('blink-yellow');
+                card.classList.remove('blink-yellow');
                 isCalibrating = false;
-                renderUI(targetData);
+                updateDOM(targetData);
+                
+                // Play a subtle "success" ping after recalibrating
+                document.getElementById('snd-ping').play().catch(e=>{});
             }, 3000);
         }
 
-        function renderUI(data) {
+        function updateDOM(data) {
             const [cmd, state] = data.decision.split(':');
             
             document.getElementById('disp-temp').innerText = data.temperature.toFixed(1) + "°C";
@@ -148,18 +161,25 @@
             document.getElementById('d60').innerText = data.prediction_60.toFixed(1) + "°C";
             document.getElementById('pill').innerText = "● " + state;
 
-            // SYNC WITH PYTHON COMMANDS
-            // RED_ON = STABLE (Green UI)
-            // GREEN_ON = ACTIVE COOLING / RECOVERY (Red UI)
-            if (cmd === "RED_ON") {
-                setTheme("#10b981", "#1e40af");
-                if (previousDecision.includes("GREEN")) document.getElementById('snd-ping').play().catch(e=>{});
-            } else if (cmd === "GREEN_ON") {
-                setTheme("#ef4444", "#7f1d1d");
-                if (!previousDecision.includes("GREEN")) document.getElementById('snd-alert').play().catch(e=>{});
-            } else {
-                setTheme("#fbbf24", "#92400e");
+            // Restoring your exact working color logic
+            let primary = "#10b981"; // Stable Green
+            let secondary = "#1e40af"; // Calm Blue
+
+            if (state.includes("COOLING") || data.temperature >= 30) {
+                primary = "#ef4444"; 
+                secondary = "#7f1d1d"; 
+                // Play alert sound if it just entered Cooling/Heat mode
+                if (!previousDecision.includes("COOLING") && data.temperature >= 30) {
+                    document.getElementById('snd-alert').play().catch(e=>{});
+                }
             }
+            
+            if (state.includes("EMERGENCY") || cmd === "YELLOW_BLINK") {
+                primary = "#fbbf24"; 
+                secondary = "#92400e"; 
+            } 
+            
+            setTheme(primary, secondary);
         }
 
         setInterval(refresh, 3000);
