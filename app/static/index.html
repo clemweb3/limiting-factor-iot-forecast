@@ -16,6 +16,7 @@
             align-items: center; height: 100vh; margin: 0; overflow: hidden; position: relative;
         }
 
+        /* Moving Technical Backdrop */
         .bg-blob {
             position: absolute; width: 600px; height: 600px; filter: blur(120px);
             border-radius: 50%; z-index: -1; opacity: 0.3; transition: background 2s ease;
@@ -41,15 +42,24 @@
 
         .temp-val { font-size: 82px; font-weight: 900; letter-spacing: -4px; margin: 10px 0; }
         .status-badge { background: rgba(255,255,255,0.08); padding: 8px 18px; border-radius: 40px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
-        .cta-area { background: rgba(0,0,0,0.4); padding: 22px; border-radius: 24px; border-left: 5px solid var(--accent); margin-top: 35px; }
+        
+        .cta-area { 
+            background: rgba(0,0,0,0.4); 
+            padding: 22px; 
+            border-radius: 24px; 
+            border-left: 5px solid var(--accent); 
+            margin-top: 35px;
+            min-height: 80px;
+        }
+
         .forecast-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 35px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 25px; }
         .forecast-item span { font-size: 12px; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700; }
         .forecast-item b { display: block; font-size: 20px; color: var(--accent); margin-top: 5px; }
 
         .blink-yellow { animation: pulse-yellow 0.8s infinite alternate ease-in-out; }
         @keyframes pulse-yellow {
-            0% { border-top-color: #fbbf24; box-shadow: 0 0 15px rgba(251, 191, 36, 0.2); }
-            100% { border-top-color: #f59e0b; box-shadow: 0 0 40px rgba(251, 191, 36, 0.4); }
+            0% { border-top-color: #fbbf24; box-shadow: 0 0 15px rgba(251, 191, 36, 0.2); transform: scale(1); }
+            100% { border-top-color: #f59e0b; box-shadow: 0 0 40px rgba(251, 191, 36, 0.4); transform: scale(1.02); }
         }
     </style>
 </head>
@@ -99,32 +109,52 @@
                 const now = d[0];
                 const currentT = now.temperature;
                 
+                // Logic: Detecting spikes or state changes
                 const spikeDetected = (previousTemp !== null && Math.abs(currentT - previousTemp) >= 5.0);
                 const stateChanged = (previousDecision !== "" && previousDecision !== now.decision);
 
                 if (spikeDetected || stateChanged) {
-                    startRecalibration(now);
+                    // This now passes the new data to the recalibration phase
+                    startRecalibration(now, spikeDetected);
                 } else {
                     updateDOM(now);
                 }
 
                 previousDecision = now.decision;
                 previousTemp = currentT;
-            } catch(e) { document.getElementById('pill').innerText = "OFFLINE"; }
+            } catch(e) { 
+                document.getElementById('pill').innerText = "OFFLINE"; 
+            }
         }
 
-        function startRecalibration(targetData) {
+        function startRecalibration(targetData, isAnomaly) {
             isCalibrating = true;
+            
+            // Audio Logic
             const hum = document.getElementById('snd-process');
             hum.play().catch(e => {});
 
-            document.getElementById('main-card').classList.add('blink-yellow');
+            // Visual Logic
+            const card = document.getElementById('main-card');
+            card.classList.add('blink-yellow');
             setTheme("#fbbf24", "#92400e");
-            document.getElementById('state-title').innerText = "RECALIBRATING...";
+
+            // FEEDBACK FIX: Immediately show what the AI is thinking based on the backend
+            document.getElementById('state-title').innerText = isAnomaly ? "ANOMALY DETECTED" : "RECALIBRATING...";
+            document.getElementById('pill').innerText = "● ANALYZING SHIFT";
+            
+            // We use the data we JUST fetched from /history to show the new projection message
+            document.getElementById('disp-cta').innerText = targetData.human_notes;
+            document.getElementById('disp-temp').innerText = targetData.temperature.toFixed(1) + "°C";
+
+            // If it's a massive anomaly, start the alarm early
+            if (isAnomaly) {
+                triggerEmergencyAlarm();
+            }
 
             setTimeout(() => {
                 hum.pause(); hum.currentTime = 0;
-                document.getElementById('main-card').classList.remove('blink-yellow');
+                card.classList.remove('blink-yellow');
                 isCalibrating = false;
                 updateDOM(targetData);
             }, 3000);
@@ -141,17 +171,16 @@
             document.getElementById('d60').innerText = data.prediction_60.toFixed(1) + "°C";
             document.getElementById('pill').innerText = "● " + state;
 
-            // --- EMERGENCY CHECK: RED ---
+            // COLOR LOGIC: Explicit checks
             if (state.includes("EMERGENCY") || state.includes("COOLING") || currentT >= 30) {
                 setTheme("#ef4444", "#7f1d1d");
                 
-                // Trigger 5-Second Alarm on NEW emergency detection
+                // 5-Second Alarm trigger
                 if (!previousDecision.includes("EMERGENCY") && !previousDecision.includes("COOLING")) {
                     triggerEmergencyAlarm();
                 }
             } 
-            // --- STABLE CHECK: GREEN ---
-            else {
+            else if (state.includes("STABLE")) {
                 setTheme("#10b981", "#1e40af");
                 if (previousDecision !== "" && (previousDecision.includes("COOLING") || previousDecision.includes("EMERGENCY"))) {
                     document.getElementById('snd-ping').play().catch(e=>{});
@@ -162,7 +191,6 @@
         function triggerEmergencyAlarm() {
             const alert = document.getElementById('snd-alert');
             alert.play().catch(e=>{});
-            // Force alarm to stop after exactly 5 seconds
             setTimeout(() => {
                 alert.pause();
                 alert.currentTime = 0;
