@@ -152,6 +152,7 @@
 
     <script>
         let previousDecision = "";
+        let previousTemp = 0;
         let isCalibrating = false;
 
         function setTheme(color, secondary) {
@@ -167,6 +168,8 @@
                 const d = await r.json();
                 if(!d || d.length === 0) return;
                 const now = d[0];
+                
+                // DETECT CHANGE IN DECISION (Recalibration trigger)
                 if (previousDecision !== "" && previousDecision !== now.decision) {
                     startRecalibration(now);
                 } else {
@@ -179,10 +182,10 @@
         function startRecalibration(targetData) {
             isCalibrating = true;
             
-            // Start Processing Hum
+            // START loop only during recalibration
             const processSnd = document.getElementById('snd-process');
-            processSnd.volume = 0.4;
-            processSnd.play().catch(e => console.log("Click page to enable audio"));
+            processSnd.volume = 0.3;
+            processSnd.play().catch(e => {});
 
             const card = document.getElementById('main-card');
             card.classList.add('blink-yellow');
@@ -193,7 +196,7 @@
             document.getElementById('disp-cta').innerText = "AI is recalculating proactive strategy based on shift...";
 
             setTimeout(() => {
-                // Stop Processing Hum
+                // STOP loop immediately
                 processSnd.pause();
                 processSnd.currentTime = 0;
                 
@@ -205,12 +208,23 @@
 
         function updateDOM(data) {
             const [cmd, state] = data.decision.split(':');
-            
-            // Sound feedback for data update
-            document.getElementById('snd-ping').volume = 0.3;
-            document.getElementById('snd-ping').play().catch(e => {});
+            const currentTemp = parseFloat(data.temperature.toFixed(1));
 
-            document.getElementById('disp-temp').innerText = data.temperature.toFixed(1) + "°C";
+            // --- AUDIO LOGIC ---
+            // 1. Play Alert if state just switched to COOLING/EMERGENCY (Red)
+            if (previousDecision !== data.decision && (state.includes("COOLING") || state.includes("EMERGENCY"))) {
+                document.getElementById('snd-alert').play().catch(e => {});
+            } 
+            // 2. Play Ping if temp shifted significantly (>= 0.5 degrees)
+            else if (Math.abs(currentTemp - previousTemp) >= 0.5) {
+                document.getElementById('snd-ping').volume = 0.3;
+                document.getElementById('snd-ping').play().catch(e => {});
+            }
+
+            previousTemp = currentTemp;
+
+            // --- UI UPDATE ---
+            document.getElementById('disp-temp').innerText = currentTemp + "°C";
             document.getElementById('state-title').innerText = state.replace(/_/g, ' ');
             document.getElementById('disp-cta').innerText = data.human_notes;
             document.getElementById('d30').innerText = data.prediction_30.toFixed(1) + "°C";
@@ -223,7 +237,6 @@
             if (state.includes("COOLING") || data.temperature >= 30) {
                 primary = "#ef4444"; 
                 secondary = "#7f1d1d"; 
-                document.getElementById('snd-alert').play().catch(e => {});
             }
             
             if (state.includes("EMERGENCY") || cmd === "YELLOW_BLINK") {
