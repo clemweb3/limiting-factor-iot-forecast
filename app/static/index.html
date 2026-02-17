@@ -8,7 +8,6 @@
             --bg: #020617;
             --card-glass: rgba(255, 255, 255, 0.07);
             --accent: #10b981; 
-            --glow: rgba(16, 185, 129, 0.2);
         }
 
         body { 
@@ -50,7 +49,7 @@
         .blink-yellow { animation: pulse-yellow 0.8s infinite alternate ease-in-out; }
         @keyframes pulse-yellow {
             0% { border-top-color: #fbbf24; box-shadow: 0 0 15px rgba(251, 191, 36, 0.2); }
-            100% { border-top-color: #f59e0b; box-shadow: 0 0 60px rgba(251, 191, 36, 0.6); }
+            100% { border-top-color: #f59e0b; box-shadow: 0 0 40px rgba(251, 191, 36, 0.4); }
         }
     </style>
 </head>
@@ -58,19 +57,19 @@
 
     <audio id="snd-ping" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
     <audio id="snd-process" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" loop></audio>
-    <audio id="snd-alert" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3"></audio>
+    <audio id="snd-alert" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" loop></audio>
 
     <div class="bg-blob blob-1" id="blob1"></div>
     <div class="bg-blob blob-2" id="blob2"></div>
 
     <div class="glass-card" id="main-card">
-        <span class="status-badge" id="pill">Initial Syncing...</span>
+        <span class="status-badge" id="pill">SYNCING ENGINE...</span>
         <h2 id="state-title" style="margin-top:25px; font-weight: 600;">Climate Monitoring</h2>
         <div class="temp-val" id="disp-temp">--°C</div>
         
         <div class="cta-area" id="cta-box">
             <small id="strategy-label" style="color: var(--accent); text-transform: uppercase; font-weight: 900; font-size: 11px;">AI PROJECTION</small>
-            <p id="disp-cta" style="margin: 10px 0 0 0; font-style: italic; line-height: 1.6; font-size: 15px;">Awaiting telemetry...</p>
+            <p id="disp-cta" style="margin: 10px 0 0 0; font-style: italic; line-height: 1.6; font-size: 15px;">Monitoring telemetry flow...</p>
         </div>
 
         <div class="forecast-grid">
@@ -92,7 +91,6 @@
 
         async function refresh() {
             if (isCalibrating) return;
-
             try {
                 const r = await fetch('/history');
                 const d = await r.json();
@@ -101,85 +99,74 @@
                 const now = d[0];
                 const currentT = now.temperature;
                 
-                // Logic 1: Detecting Spike > 5 for Alarm
                 const spikeDetected = (previousTemp !== null && Math.abs(currentT - previousTemp) >= 5.0);
-                
-                // Logic 2: Standard State Change Recalibration
                 const stateChanged = (previousDecision !== "" && previousDecision !== now.decision);
 
-                if (spikeDetected) {
-                    // Immediate High-Priority Alarm for huge spikes
-                    document.getElementById('snd-alert').play().catch(e=>{});
-                    startRecalibration(now, "ANOMALY DETECTED");
-                } else if (stateChanged) {
-                    // Standard Recalibration
-                    startRecalibration(now, "RECALIBRATING...");
+                if (spikeDetected || stateChanged) {
+                    startRecalibration(now);
                 } else {
                     updateDOM(now);
                 }
 
                 previousDecision = now.decision;
                 previousTemp = currentT;
-            } catch(e) { 
-                document.getElementById('pill').innerText = "OFFLINE";
-            }
+            } catch(e) { document.getElementById('pill').innerText = "OFFLINE"; }
         }
 
-        function startRecalibration(targetData, label) {
+        function startRecalibration(targetData) {
             isCalibrating = true;
             const hum = document.getElementById('snd-process');
-            hum.volume = 0.4;
             hum.play().catch(e => {});
 
-            const card = document.getElementById('main-card');
-            card.classList.add('blink-yellow');
+            document.getElementById('main-card').classList.add('blink-yellow');
             setTheme("#fbbf24", "#92400e");
-
-            document.getElementById('state-title').innerText = label;
-            document.getElementById('pill').innerText = "● ANALYZING SHIFT";
-            document.getElementById('disp-cta').innerText = "The AI has detected a thermal trend change. Calculating new proactive strategy...";
+            document.getElementById('state-title').innerText = "RECALIBRATING...";
 
             setTimeout(() => {
-                hum.pause();
-                hum.currentTime = 0;
-                card.classList.remove('blink-yellow');
+                hum.pause(); hum.currentTime = 0;
+                document.getElementById('main-card').classList.remove('blink-yellow');
                 isCalibrating = false;
                 updateDOM(targetData);
-                
-                // Play a subtle "success" ping after recalibrating
-                document.getElementById('snd-ping').play().catch(e=>{});
             }, 3000);
         }
 
         function updateDOM(data) {
             const [cmd, state] = data.decision.split(':');
+            const currentT = data.temperature;
             
-            document.getElementById('disp-temp').innerText = data.temperature.toFixed(1) + "°C";
+            document.getElementById('disp-temp').innerText = currentT.toFixed(1) + "°C";
             document.getElementById('state-title').innerText = state.replace(/_/g, ' ');
             document.getElementById('disp-cta').innerText = data.human_notes;
             document.getElementById('d30').innerText = data.prediction_30.toFixed(1) + "°C";
             document.getElementById('d60').innerText = data.prediction_60.toFixed(1) + "°C";
             document.getElementById('pill').innerText = "● " + state;
 
-            // Restoring your exact working color logic
-            let primary = "#10b981"; // Stable Green
-            let secondary = "#1e40af"; // Calm Blue
-
-            if (state.includes("COOLING") || data.temperature >= 30) {
-                primary = "#ef4444"; 
-                secondary = "#7f1d1d"; 
-                // Play alert sound if it just entered Cooling/Heat mode
-                if (!previousDecision.includes("COOLING") && data.temperature >= 30) {
-                    document.getElementById('snd-alert').play().catch(e=>{});
+            // --- EMERGENCY CHECK: RED ---
+            if (state.includes("EMERGENCY") || state.includes("COOLING") || currentT >= 30) {
+                setTheme("#ef4444", "#7f1d1d");
+                
+                // Trigger 5-Second Alarm on NEW emergency detection
+                if (!previousDecision.includes("EMERGENCY") && !previousDecision.includes("COOLING")) {
+                    triggerEmergencyAlarm();
+                }
+            } 
+            // --- STABLE CHECK: GREEN ---
+            else {
+                setTheme("#10b981", "#1e40af");
+                if (previousDecision !== "" && (previousDecision.includes("COOLING") || previousDecision.includes("EMERGENCY"))) {
+                    document.getElementById('snd-ping').play().catch(e=>{});
                 }
             }
-            
-            if (state.includes("EMERGENCY") || cmd === "YELLOW_BLINK") {
-                primary = "#fbbf24"; 
-                secondary = "#92400e"; 
-            } 
-            
-            setTheme(primary, secondary);
+        }
+
+        function triggerEmergencyAlarm() {
+            const alert = document.getElementById('snd-alert');
+            alert.play().catch(e=>{});
+            // Force alarm to stop after exactly 5 seconds
+            setTimeout(() => {
+                alert.pause();
+                alert.currentTime = 0;
+            }, 5000);
         }
 
         setInterval(refresh, 3000);
