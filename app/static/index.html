@@ -5,9 +5,9 @@
     <title>Proactive AI Dashboard</title>
     <style>
         :root {
-            --bg: #020617; /* Deeper dark for better contrast */
+            --bg: #020617;
             --card-glass: rgba(255, 255, 255, 0.08);
-            --accent: #4caf50; 
+            --accent: #10b981; 
         }
 
         body { 
@@ -32,12 +32,12 @@
             border-radius: 50%;
             z-index: -1;
             opacity: 0.35;
-            transition: background 2s ease, transform 5s ease-in-out;
+            transition: background 1.5s ease, transform 5s ease-in-out;
             animation: drift 20s infinite alternate;
         }
 
         .blob-1 { top: -10%; left: -10%; background: var(--accent); }
-        .blob-2 { bottom: -10%; right: -10%; background: #1e40af; } /* Deep Blue default */
+        .blob-2 { bottom: -10%; right: -10%; background: #1e40af; }
 
         @keyframes drift {
             from { transform: translate(0, 0) scale(1); }
@@ -55,17 +55,7 @@
             border-top: 8px solid var(--accent);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             position: relative;
-            transition: border-color 0.5s ease;
-        }
-
-        /* Glass Shine Effect */
-        .glass-card::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 32px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%);
-            pointer-events: none;
+            transition: border-color 0.5s ease, box-shadow 0.5s ease;
         }
 
         .temp-val { font-size: 72px; font-weight: 800; color: white; margin: 15px 0; letter-spacing: -2px; }
@@ -87,8 +77,7 @@
             border-radius: 20px; 
             border-left: 4px solid var(--accent); 
             margin-top: 30px; 
-            position: relative;
-            z-index: 1;
+            transition: border-color 0.5s ease;
         }
 
         .forecast-container {
@@ -116,13 +105,13 @@
     <div class="bg-blob blob-2" id="blob2"></div>
 
     <div class="glass-card" id="main-card">
-        <span class="status-badge" id="pill">Initializing AI...</span>
+        <span class="status-badge" id="pill">System Syncing...</span>
         <h2 id="state-title" style="margin-top:25px; font-weight: 600; letter-spacing: -0.5px;">Monitoring Environment</h2>
         <div class="temp-val" id="disp-temp">--°C</div>
         
-        <div class="cta-area">
-            <small style="color: var(--accent); text-transform: uppercase; font-weight: 800; font-size: 10px;">System Intelligence</small>
-            <p id="disp-cta" style="margin: 10px 0 0 0; font-style: italic; line-height: 1.5; font-size: 15px;">Awaiting telemetry from ESP32 node...</p>
+        <div class="cta-area" id="cta-box">
+            <small id="strategy-label" style="color: var(--accent); text-transform: uppercase; font-weight: 800; font-size: 10px;">System Intelligence</small>
+            <p id="disp-cta" style="margin: 10px 0 0 0; font-style: italic; line-height: 1.5; font-size: 15px;">Awaiting telemetry...</p>
         </div>
 
         <div class="forecast-container">
@@ -134,6 +123,13 @@
     <script>
         let previousDecision = "";
 
+        // Function to purely change the UI colors
+        function setTheme(color, secondary) {
+            document.documentElement.style.setProperty('--accent', color);
+            document.getElementById('blob1').style.background = color;
+            document.getElementById('blob2').style.background = secondary;
+        }
+
         async function refresh() {
             try {
                 const r = await fetch('/history');
@@ -143,16 +139,21 @@
                 const now = d[0];
                 const card = document.getElementById('main-card');
 
-                // Transition Logic
+                // If decision changed, go to CALIBRATING state
                 if (previousDecision !== "" && previousDecision !== now.decision) {
                     card.classList.add('blink-yellow');
                     document.getElementById('state-title').innerText = "CALIBRATING...";
+                    document.getElementById('pill').innerText = "● RECALIBRATING";
                     
+                    // FORCE YELLOW THEME during calibration
+                    setTheme("#fbbf24", "#92400e"); 
+
                     setTimeout(() => {
                         card.classList.remove('blink-yellow');
                         updateDOM(now);
                     }, 3000);
-                } else {
+                } else if (!card.classList.contains('blink-yellow')) {
+                    // Only update normally if not currently calibrating
                     updateDOM(now);
                 }
                 previousDecision = now.decision;
@@ -169,23 +170,20 @@
             document.getElementById('d60').innerText = data.prediction_60.toFixed(1) + "°";
             document.getElementById('pill').innerText = "● " + state;
 
-            // DYNAMIC THEMING
-            let color = "#10b981"; // Emerald Green (Stable)
-            let secondary = "#1e40af"; // Deep Blue
+            // DYNAMIC THEMING BASED ON STATE
+            let color = "#10b981"; // Green (Stable)
+            let secondary = "#1e40af"; // Blue
 
             if (state.includes("COOLING") || data.temperature >= 30) {
-                color = "#ef4444"; // Red (Heat)
-                secondary = "#7f1d1d"; // Dark Crimson
+                color = "#ef4444"; // Red (Hot)
+                secondary = "#7f1d1d"; 
             }
             if (state.includes("EMERGENCY") || cmd === "YELLOW_BLINK") {
-                color = "#fbbf24"; // Amber (Warning)
-                secondary = "#92400e"; // Brownish orange
+                color = "#fbbf24"; // Amber
+                secondary = "#92400e"; 
             } 
             
-            // Update UI Colors
-            document.documentElement.style.setProperty('--accent', color);
-            document.getElementById('blob1').style.background = color;
-            document.getElementById('blob2').style.background = secondary;
+            setTheme(color, secondary);
         }
 
         setInterval(refresh, 3000);
