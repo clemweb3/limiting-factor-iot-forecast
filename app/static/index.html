@@ -3,166 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CozySense | Advanced Climate Control</title>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100;400;900&family=Space+Grotesk:wght@300;700&display=swap" rel="stylesheet">
+    <title>CozySense | Smart Climate</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg: #030712;
-            --color1: #1e40af; /* Deep Tech Blue */
-            --color2: #4c1d95; /* Luxury Purple */
-            --color3: #064e3b; /* Deep Emerald */
+            --bg: #020617;
+            --color1: #2563eb; 
+            --color2: #7c3aed;
+            --color3: #10b981;
             --accent: #10b981;
-            /* Advanced Liquid Glass */
-            --glass-base: rgba(255, 255, 255, 0.015);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --refraction: rgba(255, 255, 255, 0.08);
+            --liquid-glass: rgba(255, 255, 255, 0.03);
+            --liquid-border: rgba(255, 255, 255, 0.08);
         }
 
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: 'Geist', sans-serif; 
+            min-height: 100dvh; font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg); color: white; overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* --- MESH BACKGROUND --- */
+        /* --- YOUR ORIGINAL MESH BACKGROUND --- */
         .mesh-container {
             position: fixed; inset: 0; z-index: -1;
-            background: #020617;
+            background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
             overflow: hidden;
         }
 
         .mesh-ball {
-            position: absolute; border-radius: 50%; filter: blur(100px);
-            opacity: 0.3; animation: drift 25s infinite alternate linear;
+            position: absolute; border-radius: 50%; filter: blur(80px);
+            opacity: 0.35; animation: move 20s infinite alternate ease-in-out;
         }
-        .ball-1 { width: 600px; height: 600px; background: var(--color1); top: -20%; left: -10%; }
-        .ball-2 { width: 500px; height: 500px; background: var(--color2); bottom: -10%; right: -5%; }
-        
-        @keyframes drift {
-            from { transform: rotate(0deg) translate(20px); }
-            to { transform: rotate(360deg) translate(-20px); }
+        .ball-1 { width: 450px; height: 450px; background: var(--color1); top: -10%; left: -5%; }
+        .ball-2 { width: 550px; height: 550px; background: var(--color2); bottom: -10%; right: -5%; animation-delay: -5s; }
+        .ball-3 { width: 300px; height: 300px; background: var(--color3); top: 40%; left: 25%; animation-delay: -10s; }
+
+        @keyframes move {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, 120px) scale(1.1); }
         }
 
-        /* --- THE LIQUID GLASS LAYER --- */
-        .liquid-layer {
-            position: absolute; inset: 0;
-            backdrop-filter: blur(60px); /* Heavy frost */
-            -webkit-backdrop-filter: blur(60px);
-            background: radial-gradient(circle at top left, rgba(255,255,255,0.03), transparent);
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        /* --- INITIAL PAGE: INDUSTRIAL BOLD --- */
+        /* --- SMART HOME MINIMALIST FRONT UI --- */
         #onboarding-screen {
             height: 100dvh; display: flex; flex-direction: column;
             justify-content: center; align-items: center; text-align: center;
-            position: relative; z-index: 10;
-            transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 0 30px;
+            transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
         .brand-title {
-            font-family: 'Geist', sans-serif;
-            font-size: clamp(4rem, 15vw, 9rem); 
-            font-weight: 900; 
-            letter-spacing: -0.06em;
-            margin: 0; line-height: 0.8;
+            font-size: clamp(3rem, 10vw, 5.5rem); 
+            font-weight: 800; 
+            letter-spacing: -0.03em;
+            margin: 0; 
+            line-height: 1.1;
             color: #ffffff;
-            /* Technical "Machine-Cut" Look */
-            mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
         }
 
-        .sub-tech {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.8rem; font-weight: 300; 
-            letter-spacing: 5px; text-transform: uppercase;
-            margin: 30px 0 50px 0; opacity: 0.5;
-            display: flex; align-items: center; gap: 15px;
+        .fuzzy-subtitle {
+            font-size: 1.1rem; 
+            color: rgba(255,255,255,0.7); /* Brighter for readability */
+            font-weight: 400; 
+            margin: 15px 0 40px 0;
+            max-width: 400px;
+            line-height: 1.5;
+            /* Removed All-Caps for a smarter, software-first feel */
         }
 
-        .sub-tech::before, .sub-tech::after {
-            content: ""; width: 40px; height: 1px; background: rgba(255,255,255,0.2);
-        }
-
-        /* INDUSTRIAL PILL BUTTON */
         .btn-launch {
-            background: transparent;
-            color: #ffffff; 
-            border: 1px solid var(--glass-border);
-            padding: 18px 45px; 
-            border-radius: 4px; /* Technical square edges */
-            font-weight: 600; font-size: 0.75rem; 
-            cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
-            transition: 0.4s; position: relative;
-            overflow: hidden;
-        }
-
-        .btn-launch::before {
-            content: ""; position: absolute; inset: 0; 
-            background: white; opacity: 0; transition: 0.3s;
+            background: #ffffff;
+            color: #020617; 
+            border: none;
+            padding: 18px 40px; 
+            border-radius: 100px; /* Rounded pill is more 'Smart Home' friendly */
+            font-weight: 600; 
+            font-size: 1rem; 
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .btn-launch:hover {
-            color: #000; border-color: white;
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
         }
-        .btn-launch:hover::before { opacity: 1; z-index: -1; }
 
-        /* --- DASHBOARD UI (RETAINED LOGIC) --- */
+        /* --- DASHBOARD UI (STRICTLY RETAINED DESIGN/LOGIC) --- */
         #dashboard-ui {
             opacity: 0; visibility: hidden; height: 100dvh;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: 0.8s ease; position: relative; z-index: 10;
+            transition: 0.8s ease;
         }
 
         .main-card {
-            width: 420px; padding: 50px; border-radius: 20px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 40px 100px rgba(0,0,0,0.6);
-            backdrop-filter: blur(20px);
+            width: 400px; padding: 45px; border-radius: 40px;
+            position: relative;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+            backdrop-filter: blur(40px) saturate(150%);
+            -webkit-backdrop-filter: blur(40px) saturate(150%);
+            border: 1px solid var(--liquid-border);
         }
 
         .temp-val { 
-            font-size: 110px; font-weight: 100; letter-spacing: -8px; 
+            font-size: 100px; font-weight: 400; letter-spacing: -4px; 
             margin: 10px 0; color: #fff; text-align: center;
-            font-family: 'Geist', sans-serif;
         }
 
         .status-pill {
             display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 18px; border-radius: 4px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--glass-border);
-            color: var(--accent); font-size: 10px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 2px;
+            padding: 10px 22px; border-radius: 100px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--liquid-border);
+            color: var(--accent); font-size: 11px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1px;
         }
 
         #cta-box {
-            padding: 20px; border-radius: 4px; margin-top: 25px; 
-            border-left: 2px solid var(--accent); background: rgba(255,255,255,0.01);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 24px; border-radius: 28px;
+            margin-top: 25px; border: 1px solid rgba(255,255,255,0.05);
         }
 
         .pred-item {
-            background: rgba(255, 255, 255, 0.02); padding: 15px; 
-            border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 18px; border-radius: 24px; 
+            border: 1px solid rgba(255,255,255,0.05);
             text-align: center;
         }
 
         #stop-btn {
-            width: 100%; margin-top: 30px; background: none; 
+            width: 100%; margin-top: 30px; 
+            background: rgba(255,255,255,0.05); 
             border: 1px solid rgba(255,255,255,0.1); 
-            color: rgba(255,255,255,0.4); padding: 15px; border-radius: 4px; 
-            font-size: 10px; font-weight: 600; cursor: pointer; 
-            text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+            color: #fff; padding: 18px; border-radius: 20px; 
+            font-size: 11px; font-weight: 700; cursor: pointer; 
+            text-transform: uppercase; letter-spacing: 1px;
         }
 
-        #stop-btn:hover { border-color: white; color: white; }
+        @media (max-width: 480px) {
+            .main-card { width: 88%; padding: 35px 25px; }
+            .brand-title { font-size: 3.5rem; }
+        }
 
         .blink-yellow { animation: pulse-yellow 0.8s infinite alternate ease-in-out; }
         @keyframes pulse-yellow {
-            0% { border-color: rgba(251, 191, 36, 0.1); }
-            100% { border-color: rgba(251, 191, 36, 0.8); }
+            0% { border-color: rgba(251, 191, 36, 0.2); }
+            100% { border-color: rgba(251, 191, 36, 1); }
         }
     </style>
 </head>
@@ -171,43 +160,42 @@
     <div class="mesh-container">
         <div class="mesh-ball ball-1"></div>
         <div class="mesh-ball ball-2"></div>
+        <div class="mesh-ball ball-3"></div>
     </div>
-    
-    <div class="liquid-layer"></div>
 
     <div id="onboarding-screen">
-        <h1 class="brand-title">COZY<br>SENSE</h1>
-        <div class="sub-tech" id="fuzzy-subtitle">THERMAL PRECISION</div>
-        <button class="btn-launch" onclick="launchApp()">Initialize Telemetry</button>
+        <h1 class="brand-title">CozySense</h1>
+        <p id="fuzzy-subtitle" class="fuzzy-subtitle"></p>
+        <button class="btn-launch" onclick="launchApp()">Begin Session</button>
     </div>
 
     <div id="dashboard-ui">
         <div class="main-card" id="main-card">
-            <button onclick="goHome()" style="position:absolute; top:25px; right:25px; background:none; border:none; color:white; opacity:0.2; cursor:pointer;">CLOSE</button>
+            <button onclick="goHome()" style="position:absolute; top:30px; right:30px; background:none; border:none; color:white; opacity:0.3; font-size:22px; cursor:pointer;">✕</button>
             <div style="text-align: center;">
                 <div class="status-pill">
-                    <span id="pill-dot" style="width:6px; height:6px; background:var(--accent); border-radius:50%;"></span>
-                    <span id="pill">Active</span>
+                    <span id="pill-dot" style="width:8px; height:8px; background:var(--accent); border-radius:50%; box-shadow: 0 0 12px var(--accent);"></span>
+                    <span id="pill">System Active</span>
                 </div>
             </div>
             <div style="margin: 40px 0;">
-                <h2 id="state-title" style="font-weight: 300; font-size: 0.8rem; opacity: 0.4; letter-spacing:3px; text-transform:uppercase; text-align: center;">Environment Status</h2>
+                <h2 id="state-title" style="font-weight: 400; font-size: 1rem; opacity: 0.5; margin: 0; text-align: center;">Environment Status</h2>
                 <div class="temp-val" id="disp-temp">--°</div>
             </div>
             <div id="cta-box">
-                <p id="disp-cta" style="margin: 0; font-size: 13px; opacity: 0.7; line-height: 1.5;">Awaiting sensor calibration...</p>
+                <p id="disp-cta" style="margin: 0; font-size: 14px; opacity: 0.8; line-height: 1.6; text-align: center;">Syncing sensors...</p>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;">
                 <div class="pred-item">
-                    <small style="opacity:0.3; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">T + 30m</small><br>
-                    <b id="d30" style="font-size:20px; font-weight:400;">--</b>
+                    <small style="opacity:0.4; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px;">30m Outlook</small><br>
+                    <b id="d30" style="font-size:22px; color: #fff;">--</b>
                 </div>
                 <div class="pred-item">
-                    <small style="opacity:0.3; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">T + 60m</small><br>
-                    <b id="d60" style="font-size:20px; font-weight:400;">--</b>
+                    <small style="opacity:0.4; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px;">60m Outlook</small><br>
+                    <b id="d60" style="font-size:22px; color: #fff;">--</b>
                 </div>
             </div>
-            <button id="stop-btn" onclick="toggleSensing()">Pause Stream</button>
+            <button id="stop-btn" onclick="toggleSensing()">Pause Telemetry</button>
         </div>
     </div>
 
@@ -223,15 +211,23 @@
         let sensingActive = false;
         let engineTimer = null;
 
+        const subtitles = [
+            "Your climate, intelligently refined.",
+            "Ambient precision in every breath.",
+            "The future of sensory comfort.",
+            "Stay balanced. Stay aware."
+        ];
+        document.getElementById('fuzzy-subtitle').innerText = subtitles[Math.floor(Math.random() * subtitles.length)];
+
         function launchApp() {
             document.getElementById('onboarding-screen').style.opacity = '0';
-            document.getElementById('onboarding-screen').style.transform = 'translateY(-10px) scale(1.02)';
+            document.getElementById('onboarding-screen').style.transform = 'translateY(-20px)';
             setTimeout(() => {
                 document.getElementById('onboarding-screen').style.display = 'none';
                 document.getElementById('dashboard-ui').style.visibility = 'visible';
                 document.getElementById('dashboard-ui').style.opacity = '1';
                 startSensing();
-            }, 800);
+            }, 600);
         }
 
         function goHome() {
@@ -240,15 +236,15 @@
             setTimeout(() => {
                 document.getElementById('onboarding-screen').style.display = 'flex';
                 document.getElementById('onboarding-screen').style.opacity = '1';
-                document.getElementById('onboarding-screen').style.transform = 'translateY(0) scale(1)';
+                document.getElementById('onboarding-screen').style.transform = 'translateY(0)';
                 document.getElementById('dashboard-ui').style.visibility = 'hidden';
-            }, 800);
+            }, 600);
         }
 
         function toggleSensing() {
             sensingActive ? stopSensing() : startSensing();
             const btn = document.getElementById('stop-btn');
-            btn.innerText = sensingActive ? "Pause Stream" : "Resume Stream";
+            btn.innerText = sensingActive ? "Pause Telemetry" : "Resume Telemetry";
         }
 
         function startSensing() {
@@ -312,6 +308,7 @@
             const themeColor = isDanger ? "#ef4444" : "#10b981";
             document.documentElement.style.setProperty('--accent', themeColor);
             document.getElementById('pill-dot').style.backgroundColor = themeColor;
+            document.getElementById('pill-dot').style.boxShadow = `0 0 12px ${themeColor}`;
             
             if (isDanger && !previousDecision.includes("EMERGENCY")) {
                 const alert = document.getElementById('snd-alert');
