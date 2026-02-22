@@ -63,8 +63,8 @@
             letter-spacing: -0.03em;
             margin: 0; 
             line-height: 1.1;
-            color: #ffffff;
-            transition: color 0.5s ease, transform 0.5s ease;
+            color: #ffffff !important; /* Forces it to stay white */
+            transition: transform 0.5s ease;
         }
 
         .fuzzy-subtitle {
@@ -195,7 +195,7 @@
     </div>
 
     <div id="onboarding-screen">
-        <h1 class="brand-title" id="main-logo">CozySense</h1>
+        <h1 class="brand-title" id="static-brand-logo">CozySense</h1>
         <p id="fuzzy-subtitle" class="fuzzy-subtitle"></p>
         <button class="btn-launch" onclick="launchApp()">Begin Session</button>
     </div>
@@ -292,7 +292,12 @@
         function startSensing() {
             sensingActive = true;
             document.getElementById('stop-btn').innerText = "Pause Telemetry";
-            document.getElementById('main-logo').style.color = "#ffffff";
+            
+            // Re-target logic: Only update if the element actually exists in dashboard view
+            // Since we removed 'main-logo' from landing, this safely does nothing or updates dashboard elements.
+            const logo = document.getElementById('main-logo');
+            if(logo) logo.style.color = "#ffffff";
+            
             document.getElementById('disp-temp').style.opacity = "1";
             
             refresh();
@@ -307,8 +312,8 @@
             document.getElementById('snd-process').pause();
             
             document.getElementById('stop-btn').innerText = "Resume Telemetry";
-            document.getElementById('main-logo').style.color = "var(--danger)"; // LOGO RED
             
+            // Removed the line that turns 'main-logo' red to keep branding consistent
             updateTheme("var(--danger)");
             document.getElementById('pill').innerText = "Monitoring Suspended";
             document.getElementById('disp-temp').style.opacity = "0.3";
