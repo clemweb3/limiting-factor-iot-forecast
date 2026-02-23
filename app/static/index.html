@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CozySense | Smart Climate</title>
-    
-    <link rel="icon" type="image/png" href="/static/logo.png">
+    <title>CozySense | Smart Climate Telemetry</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,11 +14,11 @@
             --bg: #020617;
             --color1: #2563eb; 
             --color2: #7c3aed;
-            --color3: #10b981;
             --accent: #10b981;
             --danger: #ef4444;
+            --warning: #fbbf24;
             --cold: #3b82f6;
-            --liquid-glass: rgba(255, 255, 255, 0.03);
+            --neutral: rgba(255, 255, 255, 0.4);
             --liquid-border: rgba(255, 255, 255, 0.08);
         }
 
@@ -28,162 +26,75 @@
             margin: 0; padding: 0; width: 100%; height: 100%;
             min-height: 100dvh; font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg); color: white; overflow: hidden;
-            -webkit-font-smoothing: antialiased;
         }
 
         .mesh-container {
             position: fixed; inset: 0; z-index: -1;
             background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
-            overflow: hidden;
         }
-
         .mesh-ball {
             position: absolute; border-radius: 50%; filter: blur(80px);
-            opacity: 0.35; animation: move 20s infinite alternate ease-in-out;
+            opacity: 0.3; animation: move 20s infinite alternate ease-in-out;
         }
         .ball-1 { width: 450px; height: 450px; background: var(--color1); top: -10%; left: -5%; }
-        .ball-2 { width: 550px; height: 550px; background: var(--color2); bottom: -10%; right: -5%; animation-delay: -5s; }
-        .ball-3 { width: 300px; height: 300px; background: var(--color3); top: 40%; left: 25%; animation-delay: -10s; }
+        .ball-2 { width: 550px; height: 550px; background: var(--color2); bottom: -10%; right: -5%; }
 
-        @keyframes move {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(80px, 120px) scale(1.1); }
+        @keyframes move { 
+            0% { transform: translate(0, 0); } 
+            100% { transform: translate(100px, 100px); } 
         }
 
-        #onboarding-screen {
-            height: 100dvh; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center;
-            padding: 0 30px;
-            transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        /* NEW CROSS-BROWSER O-LOADER */
+        .loader-ring {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255,255,255,0.1);
+            border-top: 6px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
-
-        .brand-title {
-            font-size: clamp(3rem, 10vw, 5.5rem); 
-            font-weight: 800; 
-            letter-spacing: -0.03em;
-            margin: 0; 
-            line-height: 1.1;
-            color: #ffffff !important; /* Forces it to stay white */
-            transition: transform 0.5s ease;
-        }
-
-        .fuzzy-subtitle {
-            font-size: 1.1rem; 
-            color: rgba(255,255,255,0.7);
-            font-weight: 400; 
-            margin: 15px 0 40px 0;
-            max-width: 400px;
-            line-height: 1.5;
-        }
-
-        .btn-launch {
-            background: #ffffff;
-            color: #020617; 
-            border: none;
-            padding: 18px 40px; 
-            border-radius: 100px;
-            font-weight: 600; 
-            font-size: 1rem; 
-            cursor: pointer;
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .btn-launch:hover {
-            transform: scale(1.05);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         #dashboard-ui {
             opacity: 0; visibility: hidden; height: 100dvh;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            display: flex; justify-content: center; align-items: center;
             transition: 0.8s ease;
         }
 
         .main-card {
             width: 400px; padding: 45px; border-radius: 40px;
-            position: relative;
-            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
-            backdrop-filter: blur(40px) saturate(150%);
-            -webkit-backdrop-filter: blur(40px) saturate(150%);
-            border: 1px solid var(--liquid-border);
-            transition: border-color 0.4s ease;
+            background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+            backdrop-filter: blur(40px); border: 1px solid var(--liquid-border);
+            text-align: center; position: relative;
         }
 
-        .temp-val { 
-            font-size: 100px; font-weight: 400; letter-spacing: -4px; 
-            margin: 10px 0; color: #fff; text-align: center;
-            transition: opacity 0.4s ease;
-        }
-
+        .temp-val { font-size: 100px; font-weight: 400; letter-spacing: -5px; margin: 0; }
+        
         .status-pill {
             display: inline-flex; align-items: center; gap: 10px;
             padding: 10px 22px; border-radius: 100px;
-            background: rgba(0,0,0,0.2);
-            border: 1px solid var(--liquid-border);
-            color: var(--accent); font-size: 11px; font-weight: 800;
-            text-transform: uppercase; letter-spacing: 1px;
-            transition: color 0.3s ease;
+            background: rgba(0,0,0,0.3); border: 1px solid var(--liquid-border);
+            font-size: 11px; font-weight: 800; text-transform: uppercase;
         }
 
-        #cta-box {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 24px; border-radius: 28px;
-            margin-top: 25px; border: 1px solid rgba(255,255,255,0.05);
-            min-height: 64px;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .prediction-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .pred-card { background: rgba(255,255,255,0.02); padding: 18px; border-radius: 24px; border: 1px solid transparent; }
 
-        .pred-item {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 18px; border-radius: 24px; 
-            border: 1px solid rgba(255,255,255,0.05);
-            text-align: center;
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 30px; }
+        
+        button {
+            width: 100%; border: 1px solid rgba(255,255,255,0.1); padding: 18px;
+            border-radius: 20px; font-size: 11px; font-weight: 800; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;
         }
+        
+        #stop-btn { background: rgba(255,255,255,0.05); color: #fff; }
+        #exit-btn { background: transparent; color: rgba(255,255,255,0.4); border: none; }
+        #exit-btn:hover { color: var(--danger); }
 
-        #stop-btn {
-            width: 100%; margin-top: 30px; 
-            background: rgba(255,255,255,0.05); 
-            border: 1px solid rgba(255,255,255,0.1); 
-            color: #fff; padding: 18px; border-radius: 20px; 
-            font-size: 11px; font-weight: 700; cursor: pointer; 
-            text-transform: uppercase; letter-spacing: 1px;
-            transition: background 0.3s, color 0.3s;
-        }
-
-        #data-view { display: block; }
-        #anomaly-view { 
-            display: none; 
-            text-align: center; 
-            padding: 20px 0;
-        }
-
-        .spinner {
-            width: 40px; height: 40px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top: 3px solid var(--accent);
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .blink-yellow { animation: pulse-yellow 0.8s infinite alternate ease-in-out; }
-        @keyframes pulse-yellow {
-            0% { border-color: rgba(251, 191, 36, 0.1); box-shadow: 0 0 0px transparent; }
-            100% { border-color: rgba(251, 191, 36, 0.8); box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); }
-        }
-
-        .blink-blue { animation: pulse-blue 0.8s infinite alternate ease-in-out; }
-        @keyframes pulse-blue {
-            0% { border-color: rgba(59, 130, 246, 0.1); }
-            100% { border-color: rgba(59, 130, 246, 0.8); }
-        }
-
-        @media (max-width: 480px) {
-            .main-card { width: 88%; padding: 35px 25px; }
-            .brand-title { font-size: 3.5rem; }
-        }
+        /* THE ANOMALY SCANNER ICON (+ symbol) */
+        .anomaly-svg { width: 80px; height: 80px; animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { opacity: 0.4; transform: scale(0.9); } to { opacity: 1; transform: scale(1.1); } }
     </style>
 </head>
 <body>
@@ -191,223 +102,184 @@
     <div class="mesh-container">
         <div class="mesh-ball ball-1"></div>
         <div class="mesh-ball ball-2"></div>
-        <div class="mesh-ball ball-3"></div>
     </div>
 
-    <div id="onboarding-screen">
-        <h1 class="brand-title" id="static-brand-logo">CozySense</h1>
-        <p id="fuzzy-subtitle" class="fuzzy-subtitle"></p>
-        <button class="btn-launch" onclick="launchApp()">Begin Session</button>
+    <div id="onboarding-screen" style="height: 100dvh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <h1 style="font-size: 4rem; font-weight: 800; margin: 0;">CozySense</h1>
+        <p style="opacity: 0.6;">Atmospheric Intelligence Engine</p>
+        <button onclick="launchApp()" style="margin-top: 30px; padding: 18px 45px; border-radius: 50px; border: none; cursor: pointer; font-weight: 800; background: white; color: black; width: auto;">Begin Session</button>
     </div>
 
     <div id="dashboard-ui">
         <div class="main-card" id="main-card">
-            <button onclick="goHome()" style="position:absolute; top:30px; right:30px; background:none; border:none; color:white; opacity:0.3; font-size:22px; cursor:pointer;">✕</button>
-            
-            <div style="text-align: center;">
-                <div class="status-pill">
-                    <span id="pill-dot" style="width:8px; height:8px; background:var(--accent); border-radius:50%; box-shadow: 0 0 12px var(--accent);"></span>
-                    <span id="pill">Initialising</span>
-                </div>
+            <div class="status-pill">
+                <span id="pill-dot" style="width:8px; height:8px; border-radius:50%;"></span>
+                <span id="pill-text">Initializing...</span>
             </div>
 
-            <div style="margin: 40px 0; min-height: 160px; display: flex; align-items: center; justify-content: center;">
-                <div id="data-view">
-                    <h2 id="state-title" style="font-weight: 400; font-size: 1rem; opacity: 0.5; margin: 0; text-align: center;">Environment</h2>
+            <div id="display-container" style="margin: 40px 0; position: relative; min-height: 220px; display: flex; align-items: center; justify-content: center;">
+                
+                <div id="boot-loader" style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                    <div class="loader-ring"></div>
+                    <p style="font-size: 10px; opacity: 0.5; letter-spacing: 2px;">SECURE LINK ESTABLISHING</p>
+                </div>
+
+                <div id="data-view" style="width: 100%; transition: opacity 0.5s ease; display: none; opacity: 0;">
                     <div class="temp-val" id="disp-temp">--°</div>
+                    <p id="disp-cta" style="font-size: 13px; opacity: 0.7; max-width: 280px; margin: 10px auto 0; line-height: 1.5; min-height: 40px;">Waiting for telemetry...</p>
                 </div>
 
-                <div id="anomaly-view">
-                    <div class="spinner" id="anomaly-spinner"></div>
-                    <h2 id="anomaly-text" style="font-weight: 800; font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; margin: 0;">Recalibrating</h2>
-                    <p id="anomaly-subtext" style="font-size: 11px; opacity: 0.5; margin-top: 8px; text-transform: uppercase;">Thermal Anomaly Detected</p>
-                </div>
-            </div>
-
-            <div id="cta-box">
-                <p id="disp-cta" style="margin: 0; font-size: 14px; opacity: 0.8; line-height: 1.6; text-align: center;">Connecting to thermal engine...</p>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;">
-                <div class="pred-item">
-                    <small style="opacity:0.4; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px;">30m Outlook</small><br>
-                    <b id="d30" style="font-size:22px; color: #fff;">--</b>
-                </div>
-                <div class="pred-item">
-                    <small style="opacity:0.4; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px;">60m Outlook</small><br>
-                    <b id="d60" style="font-size:22px; color: #fff;">--</b>
+                <div id="anomaly-view" style="display: none; position: absolute; z-index: 10;">
+                    <svg class="anomaly-svg" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <p style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; opacity: 0.8; color: var(--accent);">Anomaly Detected</p>
                 </div>
             </div>
 
-            <button id="stop-btn" onclick="toggleSensing()">Pause Telemetry</button>
+            <div class="prediction-grid">
+                <div class="pred-card">
+                    <small style="opacity:0.4; font-size:9px; font-weight:800;">30m Outlook</small><br>
+                    <b id="d30" style="font-size:22px;">--</b>
+                </div>
+                <div class="pred-card">
+                    <small style="opacity:0.4; font-size:9px; font-weight:800;">60m Outlook</small><br>
+                    <b id="d60" style="font-size:22px;">--</b>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button id="stop-btn" onclick="toggleSensing()">Pause Telemetry</button>
+                <button id="exit-btn" onclick="exitSession()">Exit Session</button>
+            </div>
         </div>
     </div>
 
-    <audio id="snd-ping" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
-    <audio id="snd-process" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" loop></audio>
-    <audio id="snd-alert" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" loop></audio>
-
     <script>
-        let previousDecision = "";
-        let previousTemp = null;
-        let isCalibrating = false;
         let sensingActive = false;
-        let engineTimer = null;
-
-        const subtitles = [
-            "Your climate, intelligently refined.",
-            "Ambient precision in every breath.",
-            "Stay balanced. Stay aware."
-        ];
-        document.getElementById('fuzzy-subtitle').innerText = subtitles[Math.floor(Math.random() * subtitles.length)];
+        let refreshInterval = null;
+        let isScanning = false;
+        let firstLoadComplete = false;
+        let activeAnomaly = "";
 
         function launchApp() {
-            const screen = document.getElementById('onboarding-screen');
-            screen.style.opacity = '0';
-            screen.style.transform = 'translateY(-20px)';
+            document.getElementById('onboarding-screen').style.display = 'none';
+            const ui = document.getElementById('dashboard-ui');
+            ui.style.visibility = 'visible';
+            ui.style.opacity = '1';
+            
+            // Show loader for exactly 2 seconds before starting data sync
             setTimeout(() => {
-                screen.style.display = 'none';
-                const ui = document.getElementById('dashboard-ui');
-                ui.style.visibility = 'visible';
-                ui.style.opacity = '1';
                 startSensing();
-            }, 600);
+            }, 2000);
         }
 
-        function goHome() {
-            stopSensing();
+        function exitSession() {
+            sensingActive = false;
+            clearInterval(refreshInterval);
             document.getElementById('dashboard-ui').style.opacity = '0';
+            document.getElementById('dashboard-ui').style.visibility = 'hidden';
             setTimeout(() => {
                 document.getElementById('onboarding-screen').style.display = 'flex';
-                document.getElementById('onboarding-screen').style.opacity = '1';
-                document.getElementById('onboarding-screen').style.transform = 'translateY(0)';
-                document.getElementById('dashboard-ui').style.visibility = 'hidden';
-            }, 600);
-        }
-
-        function toggleSensing() {
-            sensingActive ? stopSensing() : startSensing();
+                // Reset states for next time
+                firstLoadComplete = false;
+                document.getElementById('boot-loader').style.display = 'flex';
+                document.getElementById('data-view').style.display = 'none';
+            }, 800);
         }
 
         function startSensing() {
             sensingActive = true;
-            document.getElementById('stop-btn').innerText = "Pause Telemetry";
-            
-            // Re-target logic: Only update if the element actually exists in dashboard view
-            // Since we removed 'main-logo' from landing, this safely does nothing or updates dashboard elements.
-            const logo = document.getElementById('main-logo');
-            if(logo) logo.style.color = "#ffffff";
-            
-            document.getElementById('disp-temp').style.opacity = "1";
-            
-            refresh();
-            engineTimer = setInterval(refresh, 3000);
-            document.getElementById('snd-ping').play().catch(()=>{});
-        }
-
-        function stopSensing() {
-            sensingActive = false;
-            clearInterval(engineTimer);
-            document.getElementById('snd-alert').pause();
-            document.getElementById('snd-process').pause();
-            
-            document.getElementById('stop-btn').innerText = "Resume Telemetry";
-            
-            // Removed the line that turns 'main-logo' red to keep branding consistent
-            updateTheme("var(--danger)");
-            document.getElementById('pill').innerText = "Monitoring Suspended";
-            document.getElementById('disp-temp').style.opacity = "0.3";
+            refresh(); 
+            refreshInterval = setInterval(refresh, 3000);
         }
 
         async function refresh() {
-            if (isCalibrating || !sensingActive) return;
+            if (isScanning || !sensingActive) return;
+
             try {
                 const r = await fetch('/history');
-                const d = await r.json();
-                if(!d || d.length === 0) return;
+                const data = await r.json();
+                if(!data || data.length === 0) return;
                 
-                const now = d[0];
-                const currentT = now.temperature;
+                const latest = data[0];
+                const [cmd, state] = latest.decision.split(':');
 
-                const heatSpike = (previousTemp !== null && (currentT - previousTemp) >= 2.0); 
-                const coldSnap = (previousTemp !== null && (currentT - previousTemp) <= -5.0); 
-                const stateChanged = (previousDecision !== "" && previousDecision !== now.decision);
+                document.getElementById('disp-temp').innerText = Math.round(latest.temperature) + "°";
+                document.getElementById('disp-cta').innerText = latest.human_notes;
+                document.getElementById('d30').innerText = latest.prediction_30.toFixed(1) + "°";
+                document.getElementById('d60').innerText = latest.prediction_60.toFixed(1) + "°";
 
-                if (heatSpike) triggerRecalibration(now, "HEAT");
-                else if (coldSnap) triggerRecalibration(now, "COLD");
-                else if (stateChanged) triggerRecalibration(now, "SYNC");
-                else updateDOM(now);
+                if (!firstLoadComplete) {
+                    document.getElementById('boot-loader').style.display = 'none';
+                    const dataView = document.getElementById('data-view');
+                    dataView.style.display = 'block';
+                    setTimeout(() => { dataView.style.opacity = '1'; }, 50);
+                    firstLoadComplete = true;
+                }
 
-                previousDecision = now.decision;
-                previousTemp = currentT;
-            } catch(e) { document.getElementById('pill').innerText = "Offline"; }
+                if (state.includes("ANOMALY")) {
+                    if (activeAnomaly !== state) {
+                        runDiagnosticSequence(state, cmd);
+                        activeAnomaly = state;
+                    } else {
+                        applyThemeLogic(cmd, state);
+                    }
+                } else {
+                    activeAnomaly = "";
+                    applyThemeLogic(cmd, state);
+                }
+            } catch(e) { console.error("Sync Error", e); }
         }
 
-        function triggerRecalibration(targetData, type) {
-            isCalibrating = true;
-            const card = document.getElementById('main-card');
+        function runDiagnosticSequence(state, cmd) {
+            isScanning = true;
             const dataView = document.getElementById('data-view');
-            const anomalyView = document.getElementById('anomaly-view');
-            const spinner = document.getElementById('anomaly-spinner');
+            const scanView = document.getElementById('anomaly-view');
             
-            dataView.style.display = 'none';
-            anomalyView.style.display = 'block';
-            document.getElementById('snd-process').play().catch(()=>{});
-
-            if (type === "HEAT") {
-                card.classList.add('blink-yellow');
-                spinner.style.borderTopColor = "#fbbf24";
-                document.getElementById('anomaly-text').innerText = "Heat Anomaly";
-            } else if (type === "COLD") {
-                card.classList.add('blink-blue');
-                spinner.style.borderTopColor = "var(--cold)";
-                document.getElementById('anomaly-text').innerText = "Cold Anomaly";
-            } else {
-                card.classList.add('blink-yellow');
-                spinner.style.borderTopColor = "var(--accent)";
-                document.getElementById('anomaly-text').innerText = "Syncing Engine";
-            }
+            dataView.style.opacity = "0";
+            setTimeout(() => { if (isScanning) scanView.style.display = "block"; }, 300);
+            
+            let color = state.includes("COLD") ? "var(--cold)" : "var(--warning)";
+            updateTheme(color, "SCANNING...");
 
             setTimeout(() => {
-                document.getElementById('snd-process').pause();
-                card.classList.remove('blink-yellow', 'blink-blue');
-                dataView.style.display = 'block';
-                anomalyView.style.display = 'none';
-                isCalibrating = false;
-                updateDOM(targetData);
-            }, 3000); 
+                scanView.style.display = "none";
+                dataView.style.opacity = "1";
+                isScanning = false;
+                applyThemeLogic(cmd, state);
+            }, 2500);
         }
 
-        function updateDOM(data) {
-            if (!sensingActive) return;
-            const [cmd, state] = data.decision.split(':');
+        function applyThemeLogic(cmd, state) {
+            let theme = "var(--accent)";
+            if (cmd.includes("YELLOW")) theme = "var(--warning)";
+            if (cmd.includes("BLUE")) theme = "var(--cold)";
             
-            document.getElementById('disp-temp').innerText = Math.round(data.temperature) + "°";
-            document.getElementById('state-title').innerText = "Current Climate";
-            document.getElementById('pill').innerText = state.replace(/_/g, ' ');
-            document.getElementById('disp-cta').innerText = data.human_notes;
-            document.getElementById('d30').innerText = data.prediction_30.toFixed(1) + "°";
-            document.getElementById('d60').innerText = data.prediction_60.toFixed(1) + "°";
-            
-            let themeColor = "var(--accent)";
-            if (cmd === "RED_ON") themeColor = "var(--danger)";
-            if (cmd === "YELLOW_BLINK") themeColor = "#fbbf24";
-            
-            updateTheme(themeColor);
-
-            if (state.includes("EMERGENCY") && !previousDecision.includes("EMERGENCY")) {
-                const alert = document.getElementById('snd-alert');
-                alert.play().catch(()=>{});
-                setTimeout(() => { alert.pause(); alert.currentTime = 0; }, 5000);
+            if (state.includes("EMERGENCY")) {
+                theme = "var(--danger)";
             }
+            updateTheme(theme, state);
         }
 
-        function updateTheme(color) {
+        function updateTheme(color, label) {
             document.documentElement.style.setProperty('--accent', color);
-            const dot = document.getElementById('pill-dot');
-            dot.style.backgroundColor = color;
-            dot.style.boxShadow = `0 0 12px ${color}`;
-            document.getElementById('pill').style.color = color;
+            document.getElementById('pill-dot').style.backgroundColor = color;
+            document.getElementById('pill-text').innerText = label.replace(/_/g, ' ');
+            document.getElementById('pill-text').style.color = color;
+        }
+
+        function toggleSensing() {
+            if(sensingActive) {
+                sensingActive = false;
+                clearInterval(refreshInterval);
+                updateTheme('var(--neutral)', "Suspended");
+                document.getElementById('stop-btn').innerText = "Resume Telemetry";
+            } else {
+                startSensing();
+                document.getElementById('stop-btn').innerText = "Pause Telemetry";
+            }
         }
     </script>
 </body>
