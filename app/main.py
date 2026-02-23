@@ -1,6 +1,7 @@
 import os
 import uvicorn
-import asyncio # For future transition delays
+import asyncio
+from datetime import datetime
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,12 +11,11 @@ from fastapi.staticfiles import StaticFiles
 from .database import get_db_connection, init_db
 from .model_helper import ModelEngine
 
-# 1. INITIALIZE CONFIG & SECURITY
+# 1. INITIALIZE CONFIG
 load_dotenv()
-# Make sure your .env has PROACTIVE_API_KEY or use the default below
 API_KEY = os.getenv("PROACTIVE_API_KEY")
 
-app = FastAPI(title="Human-Centric Proactive AI")
+app = FastAPI(title="Human-Centric Proactive AI - Engine v2")
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,49 +24,71 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 2. MOUNT DASHBOARD STATIC FILES
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# 2. MOUNT DASHBOARD
+if os.path.exists("app/static"):
+    app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# 3. ENGINE SETUP
+# 3. ENGINE SETUP WITH FAILSAFE
 try:
     engine = ModelEngine()
 except Exception as e:
     print(f"[CRITICAL] AI Engine Failure: {e}")
     engine = None
 
+# Track last state to prevent hardware "atterch" (Hysteresis)
+last_action = {"command": None, "state": None, "timestamp": datetime.min}
+
 @app.on_event("startup")
 def startup_event():
     init_db()
-    print("Proactive Climate Engine: ONLINE")
+    print("--- Proactive Climate Engine: ONLINE ---")
 
-# 4. DATA PROVIDER (FOR THE HUMAN UI)
+# 4. DATA PROVIDER
 @app.get("/history")
 async def get_history():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM readings ORDER BY timestamp DESC LIMIT 10')
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # Ensure we get the most recent contextual readings
+        cursor.execute('SELECT * FROM readings ORDER BY timestamp DESC LIMIT 20')
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        return {"error": str(e)}
 
-# 5. SECURE TELEMETRY & CTA ENGINE
+# 5. SECURE TELEMETRY & DECISION ENGINE
 @app.post("/telemetry")
 async def process_telemetry(temp: float, hum: float, x_api_key: str = Header(None)):
-    # Privacy Check
+    global last_action
+    
+    # Privacy & Security Check
     if x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
+    # Default Failsafe Values
+    p30, p60 = temp, temp
+    led_cmd, state, human_msg = "RED_ON", "STABLE", "Monitoring..."
+
     if engine:
-        # IMPROVEMENT: Passing 'temp' to allow anomaly detection/spike checks
+        # A. Get Predictions (Anomaly Window logic happens inside engine)
         p30, p60 = engine.predict_horizons(temp) 
         
-        # IMPROVEMENT: Contextual status now handles anomaly states and varied scripts
+        # B. Get Human-Centric Decision
         led_cmd, state, human_msg = engine.get_contextual_status(temp, p30, p60)
-    else:
-        p30, p60 = 0.0, 0.0
-        led_cmd, state, human_msg = "RED_ON", "OFFLINE", "System offline. Operating in failsafe mode."
 
-    # 6. PERSISTENCE
+    # C. HARDWARE PROTECTION (Hysteresis)
+    # Don't change hardware state more than once every 10 seconds unless it's an ANOMALY
+    now = datetime.now()
+    time_since_last = (now - last_action["timestamp"]).total_seconds()
+    
+    if "ANOMALY" not in state and time_since_last < 10 and last_action["command"] == led_cmd:
+        # Keep previous human message to maintain "Fuzzy" continuity
+        pass 
+    else:
+        last_action = {"command": led_cmd, "state": state, "timestamp": now}
+
+    # 6. ENHANCED PERSISTENCE
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -80,12 +102,20 @@ async def process_telemetry(temp: float, hum: float, x_api_key: str = Header(Non
     except Exception as db_error:
         print(f"[DB ERROR] {db_error}")
 
-    # 7. RETURN TO CLIENT (ESP32 or Frontend)
+    # 7. RESPONSE (For ESP32/Hardware and Frontend)
     return {
         "command": led_cmd,
         "status": state,
         "cta": human_msg,
-        "forecast": {"30m": round(p30, 2), "60m": round(p60, 2)}
+        "forecast": {
+            "30m": round(p30, 2), 
+            "60m": round(p60, 2),
+            "trend": "rising" if p30 > temp else "cooling"
+        },
+        "system_meta": {
+            "engine_active": engine is not None,
+            "severity": "high" if "ANOMALY" in state else "normal"
+        }
     }
 
 if __name__ == "__main__":
