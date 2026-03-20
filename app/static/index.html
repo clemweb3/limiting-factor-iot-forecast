@@ -73,11 +73,11 @@
     .screen.hidden { opacity: 0; pointer-events: none; transform: translateY(12px); }
 
     /* ── ONBOARDING ─────────────────────────────────────────── */
-    #screen-onboard { gap: 0; padding: 24px 20px; overflow: hidden; }
+    #screen-onboard { gap: 0; padding: 24px 20px; overflow: clip; }
 
     .wordmark {
       font-family: var(--sans);
-      font-size: clamp(2.4rem, 11vw, 5.5rem); /* FIX: scales down on narrow mobile */
+      font-size: clamp(2rem, 9vw, 5.5rem); /* FIX: scales down on narrow mobile */
       font-weight: 800;
       letter-spacing: -0.04em;
       line-height: 1;
