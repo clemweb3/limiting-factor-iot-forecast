@@ -193,18 +193,19 @@
     /* Top bar */
     .topbar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 0;
+      padding: 6px 0; gap: 8px;
     }
-    .topbar-brand { font-size: 0.9rem; font-weight: 800; letter-spacing: -0.02em; }
+    .topbar-brand { font-size: 0.88rem; font-weight: 800; letter-spacing: -0.02em; flex-shrink: 0; }
     .mode-badge {
       font-family: var(--mono);
-      font-size: 0.6rem;
-      letter-spacing: 0.15em;
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      padding: 4px 10px;
+      padding: 4px 9px;
       border-radius: 100px;
       border: 1px solid var(--border);
       color: var(--muted);
+      flex-shrink: 0;
     }
     .mode-badge.live { border-color: var(--accent); color: var(--accent); }
     .topbar-exit {
@@ -242,48 +243,60 @@
     .temp-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 28px;
-      padding: 32px 28px;
+      border-radius: 24px;
+      padding: 24px 20px;
       position: relative;
-      overflow: hidden;
+      overflow: visible;       
       transition: border-color 0.4s ease;
     }
     .temp-card::before {
       content: '';
       position: absolute;
       inset: 0;
+      border-radius: 24px;     
       background: radial-gradient(ellipse 60% 50% at 80% 20%, var(--accent-dim), transparent);
       pointer-events: none;
       transition: background 0.8s ease;
+      overflow: hidden;
     }
-    .temp-row { display: flex; align-items: flex-end; gap: 16px; }
+    .temp-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;          /* FIX: wrap on very small screens */
+    }
     .temp-big {
-      font-size: clamp(4.5rem, 16vw, 6.5rem);
+      font-size: clamp(3.8rem, 18vw, 5.8rem);  /* FIX: tighter clamp for mobile */
       font-weight: 400;
       letter-spacing: -0.04em;
       line-height: 1;
       font-family: var(--sans);
       transition: color 0.4s ease;
     }
-    .temp-unit { font-size: 1.8rem; color: var(--muted); margin-bottom: 12px; }
+    .temp-unit {
+      font-size: 1.5rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
     .trend-badge {
       font-family: var(--mono);
-      font-size: 0.68rem;
-      letter-spacing: 0.1em;
-      padding: 4px 10px;
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      padding: 4px 9px;
       border-radius: 8px;
       background: var(--accent-dim);
       color: var(--accent);
-      margin-bottom: 14px;
+      margin-bottom: 8px;
       transition: all 0.4s ease;
       align-self: center;
+      white-space: nowrap;      /* FIX: prevent trend text from wrapping */
     }
     .cta-text {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       line-height: 1.6;
       color: var(--muted);
-      margin-top: 16px;
-      min-height: 52px;
+      margin-top: 14px;
+      min-height: 48px;
       transition: opacity 0.3s ease;
     }
     .cta-text.updating { opacity: 0.3; }
@@ -445,8 +458,18 @@
 
     /* Responsive */
     @media (max-width: 380px) {
-      .temp-big { font-size: 4rem; }
-      .dash-inner { padding: 16px 14px 28px; }
+      .temp-big        { font-size: 3.6rem; }
+      .dash-inner      { padding: 14px 12px 24px; gap: 12px; }
+      .temp-card       { padding: 20px 16px; }
+      .forecast-card   { padding: 14px 14px; }
+      .forecast-val    { font-size: 1.35rem; }
+      .wordmark        { font-size: 2.8rem; }
+      .mode-grid       { margin-top: 32px; gap: 10px; }
+      .mode-card       { padding: 18px 16px; }
+    }
+    @media (max-width: 320px) {
+      .temp-big        { font-size: 3rem; }
+      .temp-unit       { font-size: 1.2rem; }
     }
   </style>
 </head>
