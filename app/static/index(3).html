@@ -73,14 +73,16 @@
     .screen.hidden { opacity: 0; pointer-events: none; transform: translateY(12px); }
 
     /* ── ONBOARDING ─────────────────────────────────────────── */
-    #screen-onboard { gap: 0; }
+    #screen-onboard { gap: 0; padding: 24px 20px; overflow: hidden; }
 
     .wordmark {
       font-family: var(--sans);
-      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-size: clamp(2.4rem, 11vw, 5.5rem); /* FIX: scales down on narrow mobile */
       font-weight: 800;
       letter-spacing: -0.04em;
       line-height: 1;
+      max-width: 90vw;           /* FIX: never bleeds past viewport */
+      text-align: center;
       background: linear-gradient(135deg, var(--text) 30%, var(--accent));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -88,25 +90,28 @@
     }
     .tagline {
       font-family: var(--mono);
-      font-size: 0.75rem;
+      font-size: clamp(0.55rem, 2.2vw, 0.75rem); /* FIX: scales with viewport */
       color: var(--muted);
-      letter-spacing: 0.18em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       margin-top: 12px;
+      text-align: center;
+      max-width: 88vw;           /* FIX: prevents awkward single-word wrap */
+      line-height: 1.6;
     }
 
     .mode-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin-top: 48px;
-      width: min(400px, 90vw);
+      margin-top: 40px;
+      width: min(400px, 88vw);
     }
     .mode-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 24px 20px;
+      padding: 20px 16px;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s, transform 0.15s;
       text-align: left;
@@ -178,8 +183,8 @@
       justify-content: flex-start;
       padding: 0;
       overflow-y: auto;
-      overflow-x: clip;
-}
+      overflow-x: hidden;
+    }
     .dash-inner {
       width: min(420px, 100vw);
       padding: 24px 20px 32px;
@@ -244,16 +249,16 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 24px;
-      padding: 20px 18px 24px;
+      padding: 20px 16px;
       position: relative;
-      overflow: visible;       
+      overflow: visible;        /* FIX: was 'hidden', clipped large temp number */
       transition: border-color 0.4s ease;
     }
     .temp-card::before {
       content: '';
       position: absolute;
       inset: 0;
-      border-radius: 24px;     
+      border-radius: 24px;     /* match parent so pseudo-el doesn't bleed */
       background: radial-gradient(ellipse 60% 50% at 80% 20%, var(--accent-dim), transparent);
       pointer-events: none;
       transition: background 0.8s ease;
